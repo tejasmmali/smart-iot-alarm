@@ -15,38 +15,29 @@ margin:0;
 }
 
 .card{
-background:#1e1e1e;
-padding:30px;
+background:#2a2320;
+padding:25px;
 border-radius:25px;
 width:320px;
 text-align:center;
 }
 
-.timebox{
-display:flex;
-justify-content:center;
-gap:10px;
-margin:20px 0;
-}
-
-input{
-width:90px;
-font-size:42px;
-text-align:center;
-border:none;
-border-radius:14px;
-background:#2b2b2b;
+select{
+height:120px;
+font-size:32px;
+background:#3a312c;
 color:white;
-padding:10px;
+border:none;
+border-radius:15px;
 }
 
 button{
-background:#4285F4;
-border:none;
+margin-top:20px;
 padding:15px;
 width:100%;
-border-radius:50px;
-color:white;
+border-radius:40px;
+background:#f1c7a9;
+border:none;
 font-size:18px;
 }
 </style>
@@ -54,28 +45,36 @@ font-size:18px;
 <body>
 
 <div class="card">
-<h2>Select time</h2>
+<h3>Select time</h3>
 
-<div class="timebox">
-<input id="h" placeholder="HH">
-<span style="font-size:42px">:</span>
-<input id="m" placeholder="MM">
-</div>
+<select id="hour"></select>
+<select id="minute"></select>
 
-<button onclick="setAlarm()">OK</button>
+<select id="ampm">
+<option>AM</option>
+<option>PM</option>
+</select>
+
+<button onclick="save()">OK</button>
 </div>
 
 <script>
-async function setAlarm(){
-let h=document.getElementById("h").value.padStart(2,"0");
-let m=document.getElementById("m").value.padStart(2,"0");
+for(let i=1;i<=12;i++)
+hour.innerHTML+=`<option>${String(i).padStart(2,'0')}</option>`;
 
+for(let i=0;i<60;i++)
+minute.innerHTML+=`<option>${String(i).padStart(2,'0')}</option>`;
+
+async function save(){
 await fetch("/api/alarm",{
 method:"POST",
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({time:h+":"+m})
+body:JSON.stringify({
+hour:hour.value,
+minute:minute.value,
+ampm:ampm.value
+})
 });
-
 alert("Alarm Saved");
 }
 </script>
