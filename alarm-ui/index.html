@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alarm</title>
+
+<style>
+body{
+font-family:system-ui;
+background:#111;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.card{
+background:#1e1e1e;
+padding:30px;
+border-radius:20px;
+width:300px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:15px;
+margin:10px 0;
+font-size:22px;
+border-radius:10px;
+border:none;
+text-align:center;
+}
+
+button{
+width:100%;
+padding:15px;
+font-size:20px;
+border:none;
+border-radius:50px;
+background:#4285F4;
+color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2>⏰ Alarm</h2>
+
+<input id="h" type="number" placeholder="Hour">
+<input id="m" type="number" placeholder="Minute">
+
+<button onclick="setAlarm()">Set Alarm</button>
+</div>
+
+<script>
+async function setAlarm(){
+let h=document.getElementById("h").value.padStart(2,"0");
+let m=document.getElementById("m").value.padStart(2,"0");
+
+await fetch("/api/alarm",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({hour:h,minute:m})
+});
+
+alert("Alarm Saved");
+}
+</script>
+
+</body>
+</html>
