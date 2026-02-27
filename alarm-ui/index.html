@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Alarm</title>
 
 <style>
 body{
-font-family:system-ui;
-background:#111;
+background:#0f0f0f;
 color:white;
+font-family:system-ui;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -19,42 +17,52 @@ margin:0;
 .card{
 background:#1e1e1e;
 padding:30px;
-border-radius:20px;
-width:300px;
+border-radius:25px;
+width:320px;
 text-align:center;
+}
+
+.timebox{
+display:flex;
+justify-content:center;
+gap:10px;
+margin:20px 0;
 }
 
 input{
-width:100%;
-padding:15px;
-margin:10px 0;
-font-size:22px;
-border-radius:10px;
-border:none;
+width:90px;
+font-size:42px;
 text-align:center;
+border:none;
+border-radius:14px;
+background:#2b2b2b;
+color:white;
+padding:10px;
 }
 
 button{
-width:100%;
-padding:15px;
-font-size:20px;
-border:none;
-border-radius:50px;
 background:#4285F4;
+border:none;
+padding:15px;
+width:100%;
+border-radius:50px;
 color:white;
+font-size:18px;
 }
 </style>
-</head>
 
 <body>
 
 <div class="card">
-<h2>⏰ Alarm</h2>
+<h2>Select time</h2>
 
-<input id="h" type="number" placeholder="Hour">
-<input id="m" type="number" placeholder="Minute">
+<div class="timebox">
+<input id="h" placeholder="HH">
+<span style="font-size:42px">:</span>
+<input id="m" placeholder="MM">
+</div>
 
-<button onclick="setAlarm()">Set Alarm</button>
+<button onclick="setAlarm()">OK</button>
 </div>
 
 <script>
@@ -65,7 +73,7 @@ let m=document.getElementById("m").value.padStart(2,"0");
 await fetch("/api/alarm",{
 method:"POST",
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({hour:h,minute:m})
+body:JSON.stringify({time:h+":"+m})
 });
 
 alert("Alarm Saved");

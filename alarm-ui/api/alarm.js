@@ -1,11 +1,13 @@
-let alarm = {hour:"06",minute:"30"};
+let alarm = { time: "07:30" };
 
-export default function handler(req,res){
+export default function handler(req, res) {
 
-  if(req.method==="POST"){
-    alarm=req.body;
-    return res.status(200).json({ok:true});
+  // SET alarm
+  if (req.method === "POST") {
+    alarm = req.body;
+    return res.status(200).json({ ok: true });
   }
 
+  // GET alarm
   res.status(200).json(alarm);
 }
