@@ -1,61 +1,37 @@
 #include <WiFi.h>
-#include <HTTPClient.h>
+#include "time.h"
 
-const char* ssid="BAPPA 3";
-const char* password="tej@$m@li7122007@@$";
+const char* ssid = "ssid";
+const char* password = "PASSWORD";
 
-String api="https://your-project.vercel.app/api/alarm";
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 19800; // India UTC+5:30
+const int daylightOffset_sec = 0;
 
-#define RXD2 16
-#define TXD2 17
+HardwareSerial mySerial(2);  // UART2
 
-String lastAlarm="";
+void setup() {
+  Serial.begin(115200);
+  mySerial.begin(9600, SERIAL_8N1, 16, 17); 
+  // RX=16, TX=17
 
-void setup(){
-Serial.begin(115200);
-Serial2.begin(9600,SERIAL_8N1,RXD2,TXD2);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
 
-WiFi.begin(ssid,password);
-
-while(WiFi.status()!=WL_CONNECTED){
- delay(500);
- Serial.print(".");
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
-Serial.println("Connected");
-}
+void loop() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    return;
+  }
 
-void loop(){
+  char timeString[9];
+  strftime(timeString, sizeof(timeString), "%H:%M:%S", &timeinfo);
 
-if(WiFi.status()==WL_CONNECTED){
-
-HTTPClient http;
-http.begin(api);
-
-int code=http.GET();
-
-if(code==200){
-String payload=http.getString();
-
-int hIndex=payload.indexOf("hour")+7;
-int mIndex=payload.indexOf("minute")+9;
-
-String h=payload.substring(hIndex,hIndex+2);
-String m=payload.substring(mIndex,mIndex+2);
-
-String alarm=h+":"+m;
-
-if(alarm!=lastAlarm){
-lastAlarm=alarm;
-
-Serial2.print("<");
-Serial2.print(alarm);
-Serial2.println(">");
-}
-}
-
-http.end();
-}
-
-delay(5000);
+  mySerial.println(timeString);
+  delay(1000);
 }
