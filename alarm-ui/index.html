@@ -59,13 +59,8 @@ font-size:18px;
 </div>
 
 <script>
-for(let i=1;i<=12;i++)
-hour.innerHTML+=`<option>${String(i).padStart(2,'0')}</option>`;
-
-for(let i=0;i<60;i++)
-minute.innerHTML+=`<option>${String(i).padStart(2,'0')}</option>`;
-
 async function save(){
+
 await fetch("/api/alarm",{
 method:"POST",
 headers:{'Content-Type':'application/json'},
@@ -75,6 +70,7 @@ minute:minute.value,
 ampm:ampm.value
 })
 });
+
 alert("Alarm Saved");
 }
 </script>
