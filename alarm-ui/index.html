@@ -1,78 +1,168 @@
 <!DOCTYPE html>
 <html>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
+<head>
+<meta charset="UTF-8">
+<title>Pure Wokwi Style LCD1602</title>
 <style>
-body{
-background:#0f0f0f;
-color:white;
-font-family:system-ui;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
-}
-
-.card{
-background:#2a2320;
-padding:25px;
-border-radius:25px;
-width:320px;
-text-align:center;
-}
-
-select{
-height:120px;
-font-size:32px;
-background:#3a312c;
-color:white;
-border:none;
-border-radius:15px;
-}
-
-button{
-margin-top:20px;
-padding:15px;
-width:100%;
-border-radius:40px;
-background:#f1c7a9;
-border:none;
-font-size:18px;
-}
+  body{
+    margin:0;
+    background:#cfcfcf;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
+  svg{
+    font-family: monospace;
+  }
 </style>
-
+</head>
 <body>
 
-<div class="card">
-<h3>Select time</h3>
+<svg id="lcd" width="80mm" height="36mm" viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg">
 
-<select id="hour"></select>
-<select id="minute"></select>
+  <defs>
+    <!-- Character Cell Pattern -->
+    <pattern id="characters" width="3.55" height="5.95" patternUnits="userSpaceOnUse" x="12.45" y="12.55">
+      <rect width="2.95" height="5.55" fill="black" fill-opacity="0.05"/>
+    </pattern>
 
-<select id="ampm">
-<option>AM</option>
-<option>PM</option>
-</select>
+    <!-- Pin Pattern -->
+    <pattern id="pins" width="2.54" height="3.255" patternUnits="userSpaceOnUse" y="1.1">
+      <path fill="#92926d" d="M0,0.55c0,0 0.21,-0.52 0.87,-0.52 0.67,0 0.81,0.51 0.81,0.51v1.81h-1.869z"/>
+      <circle r="0.45" cx="0.827" cy="0.9" fill="black"/>
+    </pattern>
+  </defs>
 
-<button onclick="save()">OK</button>
-</div>
+  <!-- Board -->
+  <rect fill="#087f45" width="80" height="36"/>
+<!-- 4 Smaller Mounting Holes -->
+<g>
+  <!-- Top Left -->
+  <circle cx="3.2" cy="3.2" r="2.2" fill="#a79d6e"/>
+  <circle cx="3.2" cy="3.2" r="1.2" fill="#d9d9d9"/>
+
+  <!-- Top Right -->
+  <circle cx="77" cy="3.2" r="2.2" fill="#a79d6e"/>
+  <circle cx="77" cy="3.2" r="1.2" fill="#d9d9d9"/>
+
+  <!-- Bottom Left -->
+  <circle cx="3.2" cy="33" r="2.2" fill="#a79d6e"/>
+  <circle cx="3.2" cy="33" r="1.2" fill="#d9d9d9"/>
+  <!-- Bottom Right -->
+  <circle cx="77" cy="33" r="2.2" fill="#a79d6e"/>
+  <circle cx="77" cy="33" r="1.2" fill="#d9d9d9"/>
+</g>
+
+  <!-- Frame -->
+  <rect x="4.95" y="5.7" width="71.2" height="25.2" fill="#1a1a1a"/>
+
+  <!-- LCD Glass -->
+  <rect x="7.55" y="10.3" rx="1.5" ry="1.5" width="66" height="16" fill="#6cb201"/>
+  <!-- Screen Mount Supports -->
+<rect x="11" y="31" width="8" height="0.5" fill="#e6e6e6"/>
+<rect x="36" y="31" width="8" height="0.5" fill="#e6e6e6"/>
+<rect x="62" y="31" width="8" height="0.5" fill="#e6e6e6"/>
+<!-- Screen Mount Supports -->
+<rect x="11" y="5" width="8" height="0.5" fill="#e6e6e6"/>
+<rect x="36" y="5" width="8" height="0.5" fill="#e6e6e6"/>
+<rect x="62" y="5" width="8" height="0.5" fill="#e6e6e6"/>
+<!-- Slim Bottom Mount Rail -->
+<rect x="6" y="27.5" width="68" height="2.2" rx="1.1" fill="#262525"/>
+<rect x="10" y="28.5" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
+<rect x="10" y="28.6" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+
+<rect x="6" y="7" width="68" height="2.2" rx="1.1" fill="#262525"/>
+<rect x="10" y="8" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
+<rect x="10" y="8" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+
+  <!-- Pins -->
+  <rect x="7.55" y="-2.5" height="2.5" width="10.16" fill="url(#pins)" transform="rotate(90)"/>
+  <rect x="17" y="0.8" height="3.255" width="40.64" fill="url(#pins)"   transform="rotate(180 32 2.4)"/>
+
+  <!-- Labels -->
+  <text fill="white" font-size="1.5">
+    <tspan y="6.8" x="0.7">1</tspan>
+    <tspan y="8.9" x="2.3">GND</tspan>
+    <tspan y="11.4" x="2.3">VCC</tspan>
+    <tspan y="14" x="2.3">SDA</tspan>
+    <tspan y="16.6" x="2.3">SCL</tspan>
+  </text>
+
+  <!-- Character Grid Background -->
+  <rect fill="url(#characters)" x="12.45" y="12.55" width="56.2" height="11.5"/>
+
+  <!-- Pixel Layer -->
+  <g id="pixels" transform="translate(12.45,12.55)" fill="#1f3f1f"></g>
+
+</svg>
 
 <script>
-async function save(){
+const COLS = 16;
+const CELL_W = 3.55;
+const CELL_H = 5.95;
 
-await fetch("/api/alarm",{
-method:"POST",
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-hour:hour.value,
-minute:minute.value,
-ampm:ampm.value
-})
-});
+const DOT_W = 0.55;
+const DOT_H = 0.65;
+const DOT_SPACING_X = 0.6;
+const DOT_SPACING_Y = 0.7;
 
-alert("Alarm Saved");
+const font = {
+"A":["01110","10001","10001","11111","10001","10001","10001","00000"],
+"L":["10000","10000","10000","10000","10000","10000","11111","00000"],
+"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
+"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
+"S":["01111","10000","10000","01110","00001","00001","11110","00000"],
+"T":["11111","00100","00100","00100","00100","00100","00100","00000"],
+"P":["11110","10001","10001","11110","10000","10000","10000","00000"],
+" ":["00000","00000","00000","00000","00000","00000","00000","00000"],
+":":["00000","00100","00100","00000","00100","00100","00000","00000"],
+"1":["00100","01100","00100","00100","00100","00100","01110","00000"],
+"2":["01110","10001","00001","00010","00100","01000","11111","00000"],
+"4":["00010","00110","01010","10010","11111","00010","00010","00000"],
+"5":["11111","10000","11110","00001","00001","10001","01110","00000"]
+};
+
+const pixelGroup = document.getElementById("pixels");
+
+function clearDisplay(){
+  pixelGroup.innerHTML = "";
 }
+
+function drawChar(char, col, row){
+  const pattern = font[char] || font[" "];
+
+  for(let y=0;y<8;y++){
+    for(let x=0;x<5;x++){
+      if(pattern[y][x]==="1"){
+        const px = col*CELL_W + x*DOT_SPACING_X;
+        const py = row*CELL_H + y*DOT_SPACING_Y;
+
+        const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        rect.setAttribute("x",px);
+        rect.setAttribute("y",py);
+        rect.setAttribute("width",DOT_W);
+        rect.setAttribute("height",DOT_H);
+        pixelGroup.appendChild(rect);
+      }
+    }
+  }
+}
+
+function print(text,row){
+  for(let i=0;i<text.length && i<COLS;i++){
+    drawChar(text[i],i,row);
+  }
+}
+
+function setLCD(line1,line2){
+  clearDisplay();
+  print(line1.padEnd(16," "),0);
+  print(line2.padEnd(16," "),1);
+}
+
+setLCD("SMART ALARM","12:45 PM");
+
 </script>
 
 </body>
