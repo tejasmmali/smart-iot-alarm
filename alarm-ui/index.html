@@ -120,14 +120,16 @@ const DOT_SPACING_Y = 0.7;
 
 const pixelGroup = document.getElementById("pixels");
 
-let alarmHour = null;
+let alarmHour = null;     // 24h format
 let alarmMinute = null;
-let alarmActive = false;
-let ringing = false;
+let alarmSet = false;
+
+const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
 /* ================= FONT ================= */
 
 const font = {
+
 "0":["01110","10001","10011","10101","11001","10001","01110","00000"],
 "1":["00100","01100","00100","00100","00100","00100","01110","00000"],
 "2":["01110","10001","00001","00010","00100","01000","11111","00000"],
@@ -139,21 +141,41 @@ const font = {
 "8":["01110","10001","10001","01110","10001","10001","01110","00000"],
 "9":["01110","10001","10001","01111","00001","00010","11100","00000"],
 ":":["00000","00100","00100","00000","00100","00100","00000","00000"],
+
 "A":["01110","10001","10001","11111","10001","10001","10001","00000"],
-"L":["10000","10000","10000","10000","10000","10000","11111","00000"],
-"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
-"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
 "P":["11110","10001","10001","11110","10000","10000","10000","00000"],
+"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
 "S":["01111","10000","10000","01110","00001","00001","11110","00000"],
 "U":["10001","10001","10001","10001","10001","10001","01110","00000"],
-"N":["10001","11001","10101","10011","10001","10001","10001","00000"],
 "T":["11111","00100","00100","00100","00100","00100","00100","00000"],
+"W":["10001","10001","10001","10101","10101","11011","10001","00000"],
 "H":["10001","10001","10001","11111","10001","10001","10001","00000"],
 "F":["11111","10000","10000","11110","10000","10000","10000","00000"],
-"W":["10001","10001","10001","10101","10101","11011","10001","00000"],
 "E":["11111","10000","10000","11110","10000","10000","11111","00000"],
 "D":["11110","10001","10001","10001","10001","10001","11110","00000"],
+"O":["01110",
+     "10001",
+     "10001",
+     "10001",
+     "10001",
+     "10001",
+     "01110",
+     "00000"],
+
+/* 🔔 YOUR EXACT BELL */
+"B":[
+"00000",
+"00100",
+"01110",
+"01110",
+"01110",
+"11111",
+"00100",
+"00000"
+],
+
 " ":["00000","00000","00000","00000","00000","00000","00000","00000"]
+
 };
 
 /* ================= LCD DRAW ================= */
@@ -164,17 +186,21 @@ function clearDisplay(){
 
 function drawChar(char,col,row){
   const pattern = font[char] || font[" "];
+
   for(let y=0;y<8;y++){
     for(let x=0;x<5;x++){
       if(pattern[y][x]==="1"){
         const px = col*CELL_W + x*DOT_SPACING_X;
         const py = row*CELL_H + y*DOT_SPACING_Y;
-        const rect = document.createElementNS(
+
+        const rect=document.createElementNS(
           "http://www.w3.org/2000/svg","rect");
+
         rect.setAttribute("x",px);
         rect.setAttribute("y",py);
         rect.setAttribute("width",DOT_W);
         rect.setAttribute("height",DOT_H);
+
         pixelGroup.appendChild(rect);
       }
     }
@@ -182,95 +208,88 @@ function drawChar(char,col,row){
 }
 
 function print(text,row){
-  for(let i=0;i<text.length && i<COLS;i++){
-    drawChar(text[i],i,row);
+  for(let i=0;i<COLS;i++){
+    drawChar(text[i] || " ",i,row);
   }
 }
 
 function setLCD(l1,l2){
   clearDisplay();
-  print(l1.padEnd(16," "),0);
-  print(l2.padEnd(16," "),1);
+  print(l1,l1 ? 0 : 0);
+  print(l2,l2 ? 1 : 1);
 }
 
-/* ================= TIME ================= */
+/* ================= CLOCK ================= */
 
 function updateClock(){
 
   const now = new Date();
-  let hour = now.getHours();
+
+  let hour24 = now.getHours();
   const minute = now.getMinutes();
   const second = now.getSeconds();
 
-  let period="AM";
-  if(hour>=12) period="PM";
-  if(hour==0) hour=12;
-  else if(hour>12) hour-=12;
+  // Convert to 12h
+  let displayHour = hour24;
+  let period = "AM";
 
-  const hh=String(hour).padStart(2,"0");
-  const mm=String(minute).padStart(2,"0");
-  const ss=String(second).padStart(2,"0");
+  if(hour24 >= 12) period="PM";
+  if(hour24 == 0) displayHour=12;
+  else if(hour24 > 12) displayHour-=12;
 
-  let bottom="AL --:--";
+  const hh = String(displayHour).padStart(2,"0");
+  const mm = String(minute).padStart(2,"0");
+  const ss = String(second).padStart(2,"0");
 
-  if(alarmActive)
-    bottom="AL "+String(alarmHour).padStart(2,"0")+":"+
-            String(alarmMinute).padStart(2,"0");
+  const dayName = days[now.getDay()] || "  ";
 
-  if(ringing)
-    bottom="*** ALARM ***";
+  // ===== EXACT 16 CHAR TOP ROW =====
+  let topRow = hh+":"+mm+":"+ss+" "+period;
+  topRow = topRow.padEnd(14," ") + dayName;
+  topRow = topRow.substring(0,16);
 
-  setLCD(hh+":"+mm+":"+ss+" "+period, bottom);
+  // ===== BOTTOM ROW =====
+  let bottomRow = "--:--".padEnd(16," ");
 
-  if(alarmActive &&
-     now.getHours()==alarmHour &&
-     minute==alarmMinute &&
-     second==0){
-      ringing=true;
+  if(alarmSet){
+
+    let alarmDisplay = alarmHour;
+    let alarmPeriod="AM";
+
+    if(alarmHour >= 12) alarmPeriod="PM";
+    if(alarmHour == 0) alarmDisplay=12;
+    else if(alarmHour > 12) alarmDisplay-=12;
+
+    bottomRow =
+      String(alarmDisplay).padStart(2,"0")+":"+
+      String(alarmMinute).padStart(2,"0")+" "+
+      alarmPeriod;
+
+    bottomRow = bottomRow.padEnd(15," ") + "B";
+    bottomRow = bottomRow.substring(0,16);
   }
+
+  setLCD(topRow,bottomRow);
 }
 
 setInterval(updateClock,1000);
 
-/* ================= SET ALARM ================= */
+/* ================= ALARM ================= */
 
-async function setAlarm(){
-
+function setAlarm(){
   const input=document.getElementById("alarmInput").value;
   if(!input) return;
 
   const parts=input.split(":");
-
   alarmHour=parseInt(parts[0]);
   alarmMinute=parseInt(parts[1]);
-  alarmActive=true;
-  ringing=false;
-
-  try{
-    await fetch(
-      SUPABASE_URL+"/rest/v1/alarm?id=eq.1",
-      {
-        method:"PATCH",
-        headers:{
-          "apikey":SUPABASE_KEY,
-          "Authorization":"Bearer "+SUPABASE_KEY,
-          "Content-Type":"application/json",
-          "Prefer":"return=minimal"
-        },
-        body:JSON.stringify({
-          hour:alarmHour,
-          minute:alarmMinute
-        })
-      }
-    );
-  }catch(e){
-    console.log("DB error");
-  }
+  alarmSet=true;
 }
 
 function stopAlarm(){
-  ringing=false;
+  alarmSet=false;
 }
+
 
 </script>
 </body>
