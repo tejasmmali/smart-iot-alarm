@@ -2,105 +2,1050 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Pure Wokwi Style LCD1602</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@800&display=swap" rel="stylesheet">
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Smart IoT Alarm</title>
 <style>
+  :root{
+    --bg-main:#ffffff;
+    --bg-card:#ffffff;
+    --bg-card-soft:#fafafa;
+    --accent:#000000;
+    --accent-soft:#000000;
+    --text-primary:#000000;
+    --text-muted:#6a6a6a;
+    --divider:#111111;
+  }
+
+  *{
+    box-sizing:border-box;
+  }
+
   body{
     margin:0;
-    background:#cfcfcf;
+    background:var(--bg-main);
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+    padding:32px 24px 48px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    color:var(--text-primary);
+  }
+
+  .digit-font{
+    font-family:"Doto",system-ui,monospace;
+    letter-spacing:0.04em;
+  }
+
+  .phone-shell{
+    position:relative;
+    width:100%;
+    max-width:960px;
+    padding:0 0 40px;
+    background:var(--bg-main);
+    display:flex;
+    flex-direction:column;
+  }
+
+  .status-bar{
+    display:none;
+  }
+
+  .status-bar-right{
+    display:flex;
+    gap:6px;
+    align-items:center;
+  }
+
+  .screen{
+    flex:1;
+    border-radius:0;
+    padding:8px 0 0;
+    background:var(--bg-main);
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+
+  .screen-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+
+  .screen-title{
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:0.02em;
+  }
+
+  .kebab{
+    display:none;
+  }
+
+  .lcd-wrap{
+    display:flex;
+    justify-content:center;
+    margin-top:4px;
+    margin-bottom:4px;
+  }
+
+  .lcd-label{
+    font-size:40px;
+    font-family:doto;
+    text-transform:uppercase;
+  font-weight: 800;
+
+    color:#000000;
+    margin-bottom:8px;
+    font-family: "Doto",system-ui,monospace ;
+    text-align:center;
+    width:100%;
+
+
+  }
+
+  .alarm-list{
+    margin-top:6px;
+    padding-top:12px;
+    border-top:1px solid #e0e0e0;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:24px;
+  }
+
+  .alarm-card{
+    background:#ffffff;
+    border-radius:18px;
+    padding:14px 16px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 4px 0 #000000;
+    cursor:pointer;
+    border:3px solid #000000;
+    transition:transform 0.1s ease,box-shadow 0.1s ease,background 0.1s ease;
+  }
+
+  .alarm-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 0 #000000;
+  }
+
+  .alarm-main{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  .alarm-caption{
+    font-size:12px;
+    color:var(--text-muted);
+    display:flex;
+    gap:4px;
+  }
+
+  .alarm-caption-dot{
+    width:6px;
+    height:6px;
+    border-radius:999px;
+    border:2px solid #000000;
+    background:transparent;
+    margin-top:4px;
+  }
+
+  .alarm-caption-text{
+    display:flex;
+    gap:4px;
+    align-items:center;
+  }
+
+  .alarm-label{
+    font-size:11px;
+    color:var(--text-muted);
+  }
+
+  .alarm-time-row{
+    display:flex;
+    align-items:flex-end;
+    gap:6px;
+  }
+
+  .alarm-time{
+    font-size:30px;
+    line-height:1;
+    font-weight:600;
+    letter-spacing:0.03em;
+  }
+
+  .alarm-meridiem{
+    font-size:13px;
+    text-transform:lowercase;
+    color:var(--text-muted);
+    margin-bottom:3px;
+  }
+
+  .toggle-pill{
+    width:44px;
+    height:24px;
+    border-radius:999px;
+    background:#f0f0f0;
+    box-shadow:inset 0 0 0 1px #000000;
+    padding:3px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    transition:background 0.16s ease,box-shadow 0.16s ease;
+  }
+
+  .toggle-knob{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#ffffff;
+    box-shadow:0 2px 0 rgba(0,0,0,0.7);
+    transition:transform 0.16s ease,background 0.16s ease;
+  }
+
+  .toggle-pill.on{
+    background:#000000;
+    box-shadow:inset 0 0 0 1px #000000;
+  }
+
+  .toggle-pill.on .toggle-knob{
+    transform:translateX(18px);
+    background:#ffffff;
+  }
+
+  .fab{
+    display:none;
+  }
+
+  .fab:active{
+    transform:translateY(1px) scale(0.99);
+    box-shadow:0 4px 18px rgba(0,0,0,0.8);
+  }
+
+  .nav-bar{
+    display:none;
+  }
+
+  .nav-item{
+    display:none;
+  }
+
+  .nav-item.active{
+    opacity:1;
+  }
+
+  .nav-icon{
+    display:none;
+  }
+
+  .nav-item.active .nav-icon{
+    background:#271918;
+  }
+
+  /* Time picker "second screen" */
+  .time-picker-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.25);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:40;
+  }
+
+  /* Date picker overlay */
+  .date-picker-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.25);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:30;
+  }
+
+  .date-picker{
+    width:100%;
+    max-width:360px;
+    border-radius:20px;
+    padding:18px 18px 16px;
+    background:#ffffff;
+    color:#000000;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    border:2px solid #000000;
+  }
+
+  .date-picker-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  .date-picker-body{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .date-picker-actions{
+    margin-top:14px;
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    font-size:13px;
+  }
+
+  .calendar-wrap{
+    margin-top:8px;
+    border-top:1px solid #e0e0e0;
+    padding-top:12px;
+  }
+
+  .calendar-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+
+  .calendar-month{
+    font-weight:700;
+    font-size:14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .cal-nav{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    border:1px solid #000000;
+    background:#ffffff;
+    color:#000000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+
+  .cal-nav:active{
+    transform:translateY(1px);
+  }
+
+  .calendar-weekdays{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    font-size:11px;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+
+  .calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+  }
+
+  .cal-day{
+    height:34px;
+    border-radius:10px;
+    border:1px solid #000000;
+    background:#ffffff;
+    color:#000000;
+    cursor:pointer;
+    font:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .cal-day.out{
+    opacity:0.35;
+    border-style:dashed;
+  }
+
+  .cal-day.selected{
+    background:#000000;
+    color:#ffffff;
+  }
+
+  .calendar-bottom{
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+
+  .time-picker{
+    width:100%;
+    max-width:320px;
+    border-radius:20px;
+    padding:18px 18px 14px;
+    background:#ffffff;
+    box-shadow:0 6px 0 #000000;
+    border:2px solid #000000;
+  }
+
+  .time-picker-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:12px;
+  }
+
+  .time-picker-title{
+    font-size:13px;
+    color:var(--text-muted);
+  }
+
+  .time-digital{
+    display:flex;
+    align-items:flex-end;
+    gap:6px;
+    margin-bottom:14px;
+  }
+
+  .time-box{
+    min-width:70px;
+    padding:10px 8px 6px;
+    border-radius:18px;
+    background:#ffffff;
+    border:2px solid #000000;
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
   }
+
+  .time-number{
+    font-size:30px;
+  }
+
+  .time-box-input{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    text-align:center;
+    padding:0;
+    margin:0;
+    color:#000000;
+    caret-color:#000000;
+  }
+
+  .time-box-input::selection{
+    background:#000000;
+    color:#ffffff;
+  }
+
+  .time-label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.13em;
+    color:var(--text-muted);
+    margin-top:3px;
+  }
+
+  .time-colon{
+    font-size:26px;
+    margin-bottom:2px;
+    color:var(--text-muted);
+  }
+
+  .ampm-toggle{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .chip{
+    min-width:48px;
+    padding:6px 10px 4px;
+    border-radius:999px;
+    background:#ffffff;
+    border:2px solid #000000;
+    text-align:center;
+    font-size:11px;
+    text-transform:lowercase;
+    cursor:pointer;
+    color:var(--text-muted);
+  }
+
+  .chip.active{
+    background:#000000;
+    border-color:#000000;
+    color:#ffffff;
+    font-weight:600;
+  }
+
+  .time-input-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:4px;
+    font-size:11px;
+    color:var(--text-muted);
+  }
+
+  .time-picker-actions{
+    margin-top:14px;
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    font-size:13px;
+  }
+
+  .btn-text{
+    background:none;
+    border:none;
+    padding:4px 6px;
+    color:#000000;
+    font:inherit;
+    cursor:pointer;
+  }
+
+  .btn-text.secondary{
+    color:var(--text-muted);
+  }
+
+  .hidden-native-input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+    width:0;
+    height:0;
+  }
+
+  /* Details "third screen" */
+  .details-sheet{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    background:#ffffff;
+    border-radius:24px 24px 0 0;
+    padding:18px 18px 20px;
+    box-shadow:0 -6px 0 #000000;
+    border-top:2px solid #000000;
+    z-index:20;
+    transform:translateY(100%);
+    opacity:0;
+    pointer-events:none;
+    transition:
+      transform 0.32s cubic-bezier(0.22,0.61,0.36,1),
+      opacity 0.24s ease-out;
+  }
+
+  .details-sheet.open{
+    transform:translateY(0);
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .details-grabber{
+    width:38px;
+    height:4px;
+    border-radius:999px;
+    background:#000000;
+    margin:0 auto 10px;
+  }
+
+  .details-header{
+    margin-bottom:14px;
+    display:none;
+  }
+
+  .details-title{
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:2px;
+  }
+
+  .details-subtitle{
+    font-size:12px;
+    color:var(--text-muted);
+  }
+
+  .details-time-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:10px;
+    margin-bottom:14px;
+  }
+
+  .details-time-main{
+    font-size:32px;
+    font-weight:600;
+  }
+
+  .details-time-period{
+    font-size:14px;
+    margin-left:4px;
+    text-transform:lowercase;
+  }
+
+  .details-edit-chip{
+    border-radius:999px;
+    padding:6px 12px;
+    border:2px solid #000000;
+    font-size:12px;
+    background-color: #ffffff;
+  }
+
+  .details-day-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:14px;
+  }
+
+  .day-chip{
+    width:36px;
+    height:26px;
+    border-radius:9px;
+   
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    cursor:pointer;
+    background-color: #ebebeb98;
+  }
+
+  .day-chip.active{
+    background:#000000;
+    color:#ffffff;
+  }
+
+  .details-inline{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+    font-size:13px;
+  }
+
+  .details-inline span:first-child{
+    color:var(--text-muted);
+  }
+
+  .details-settings{
+    margin-top:4px;
+    border-radius:10px;
+    overflow:hidden;
+  }
+
+  .setting-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 0;
+    font-size:13px;
+    background-color: #ebebeb98;
+    border-bottom: 2px solid #ffffff;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .details-settings .setting-card:first-child{
+    border-top-left-radius:10px;
+    border-top-right-radius:10px;
+  }
+
+  .details-settings .setting-card:last-child{
+    border-bottom-left-radius:10px;
+    border-bottom-right-radius:10px;
+    border-bottom:none;
+  }
+  
+  .setting-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .setting-icon{
+    width:18px;
+    text-align:center;
+  }
+
+  .setting-label{
+    color:var(--text-muted);
+  }
+
+  .setting-value{
+    font-weight:600;
+  }
+
+  .setting-toggle{
+    width:32px;
+    height:18px;
+    border-radius:999px;
+    border:1px solid #000000;
+    position:relative;
+  }
+
+  .setting-toggle::after{
+    content:"";
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#000000;
+  }
+
+  .details-footer{
+    display:flex;
+    justify-content:space-between;
+    margin-top:14px;
+    font-size:13px;
+  }
+
+  .details-btn{
+    min-width:100px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 600;
+    padding:8px 14px;
+    border-radius:999px;
+    border:3px solid #000000;
+    text-align:center;
+    cursor:pointer;
+    
+
+  }
+  #details-btn:hover{
+    
+    background: #d8d7d7b9;
+    
+
+  }
+
+  #details-delete{
+    background:#ffffff;
+    color:#000000;
+  }
+  #details-delete:hover{
+   border: 3px dashed #000000;
+   background: #d8d7d7b9;
+  }
+  #details-save{
+    background:#000000;
+    color:#ffffff;
+  }
+
   svg{
-    font-family: monospace;
+    font-family:monospace;
   }
+
+  .new-alarm-card{
+    border-radius:18px;
+    padding:30px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:3px dashed #000000;
+    background:#ffffff;
+    cursor:pointer;
+    text-align:center;
+    font-size:14px;
+    font-weight:500;
+  }
+  .new-alarm-card:hover{
+    border:3px solid #000000;
+  }
+
+  .new-alarm-card span{
+    margin-left:6px;
+  }
+
+  
 </style>
 </head>
 <body>
+<div class="phone-shell">
+  <div class="status-bar">
+    <div>7:02</div>
+    <div class="status-bar-right">
+      <span>◦◦◦</span>
+      <span>63%</span>
+    </div>
+  </div>
 
-<svg id="lcd" width="80mm" height="36mm" viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg">
+  <div class="screen">
+    <div class="screen-header">
+      <div class="screen-title">Alarms</div>
+      <div class="kebab">⋮</div>
+    </div>
 
-  <defs>
-    <!-- Character Cell Pattern -->
-    <pattern id="characters" width="3.55" height="5.95" patternUnits="userSpaceOnUse" x="12.45" y="12.55">
-      <rect width="2.95" height="5.55" fill="black" fill-opacity="0.05"/>
-    </pattern>
+    <div class="lcd-label">SMART IOT CLOCK</div>
+    <div class="lcd-wrap">
+      <svg id="lcd" width="80mm" height="36mm" viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg">
 
-    <!-- Pin Pattern -->
-    <pattern id="pins" width="2.54" height="3.255" patternUnits="userSpaceOnUse" y="1.1">
-      <path fill="#92926d" d="M0,0.55c0,0 0.21,-0.52 0.87,-0.52 0.67,0 0.81,0.51 0.81,0.51v1.81h-1.869z"/>
-      <circle r="0.45" cx="0.827" cy="0.9" fill="black"/>
-    </pattern>
-  </defs>
+        <defs>
+          <pattern id="characters" width="3.55" height="5.95" patternUnits="userSpaceOnUse" x="12.45" y="12.55">
+            <rect width="2.95" height="5.55" fill="black" fill-opacity="0.05"/>
+          </pattern>
 
-  <!-- Board -->
-  <rect fill="#087f45" width="80" height="36"/>
-<!-- 4 Smaller Mounting Holes -->
-<g>
-  <!-- Top Left -->
-  <circle cx="3.2" cy="3.2" r="2.2" fill="#a79d6e"/>
-  <circle cx="3.2" cy="3.2" r="1.2" fill="#d9d9d9"/>
+          <pattern id="pins" width="2.54" height="3.255" patternUnits="userSpaceOnUse" y="1.1">
+            <path fill="#92926d" d="M0,0.55c0,0 0.21,-0.52 0.87,-0.52 0.67,0 0.81,0.51 0.81,0.51v1.81h-1.869z"/>
+            <circle r="0.45" cx="0.827" cy="0.9" fill="black"/>
+          </pattern>
+        </defs>
 
-  <!-- Top Right -->
-  <circle cx="77" cy="3.2" r="2.2" fill="#a79d6e"/>
-  <circle cx="77" cy="3.2" r="1.2" fill="#d9d9d9"/>
+        <rect fill="#087f45" width="80" height="36"/>
 
-  <!-- Bottom Left -->
-  <circle cx="3.2" cy="33" r="2.2" fill="#a79d6e"/>
-  <circle cx="3.2" cy="33" r="1.2" fill="#d9d9d9"/>
-  <!-- Bottom Right -->
-  <circle cx="77" cy="33" r="2.2" fill="#a79d6e"/>
-  <circle cx="77" cy="33" r="1.2" fill="#d9d9d9"/>
-</g>
+        <g>
+          <circle cx="3.2" cy="3.2" r="2.2" fill="#a79d6e"/>
+          <circle cx="3.2" cy="3.2" r="1.2" fill="#d9d9d9"/>
 
-  <!-- Frame -->
-  <rect x="4.95" y="5.7" width="71.2" height="25.2" fill="#1a1a1a"/>
+          <circle cx="77" cy="3.2" r="2.2" fill="#a79d6e"/>
+          <circle cx="77" cy="3.2" r="1.2" fill="#d9d9d9"/>
 
-  <!-- LCD Glass -->
-  <rect x="7.55" y="10.3" rx="1.5" ry="1.5" width="66" height="16" fill="#6cb201"/>
-  <!-- Screen Mount Supports -->
-<rect x="11" y="31" width="8" height="0.5" fill="#e6e6e6"/>
-<rect x="36" y="31" width="8" height="0.5" fill="#e6e6e6"/>
-<rect x="62" y="31" width="8" height="0.5" fill="#e6e6e6"/>
-<!-- Screen Mount Supports -->
-<rect x="11" y="5" width="8" height="0.5" fill="#e6e6e6"/>
-<rect x="36" y="5" width="8" height="0.5" fill="#e6e6e6"/>
-<rect x="62" y="5" width="8" height="0.5" fill="#e6e6e6"/>
-<!-- Slim Bottom Mount Rail -->
-<rect x="6" y="27.5" width="68" height="2.2" rx="1.1" fill="#262525"/>
-<rect x="10" y="28.5" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
-<rect x="10" y="28.6" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+          <circle cx="3.2" cy="33" r="2.2" fill="#a79d6e"/>
+          <circle cx="3.2" cy="33" r="1.2" fill="#d9d9d9"/>
 
-<rect x="6" y="7" width="68" height="2.2" rx="1.1" fill="#262525"/>
-<rect x="10" y="8" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
-<rect x="10" y="8" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+          <circle cx="77" cy="33" r="2.2" fill="#a79d6e"/>
+          <circle cx="77" cy="33" r="1.2" fill="#d9d9d9"/>
+        </g>
 
-  <!-- Pins -->
-  <rect x="7.55" y="-2.5" height="2.5" width="10.16" fill="url(#pins)" transform="rotate(90)"/>
-  <rect x="17" y="0.8" height="3.255" width="40.64" fill="url(#pins)"   transform="rotate(180 32 2.4)"/>
+        <rect x="4.95" y="5.7" width="71.2" height="25.2" fill="#1a1a1a"/>
 
-  <!-- Labels -->
-  <text fill="white" font-size="1.5">
-    <tspan y="6.8" x="0.7">1</tspan>
-    <tspan y="8.9" x="2.3">GND</tspan>
-    <tspan y="11.4" x="2.3">VCC</tspan>
-    <tspan y="14" x="2.3">SDA</tspan>
-    <tspan y="16.6" x="2.3">SCL</tspan>
-  </text>
+        <rect x="7.55" y="10.3" rx="1.5" ry="1.5" width="66" height="16" fill="#6cb201"/>
 
-  <!-- Character Grid Background -->
-  <rect fill="url(#characters)" x="12.45" y="12.55" width="56.2" height="11.5"/>
+        <rect x="11" y="31" width="8" height="0.5" fill="#e6e6e6"/>
+        <rect x="36" y="31" width="8" height="0.5" fill="#e6e6e6"/>
+        <rect x="62" y="31" width="8" height="0.5" fill="#e6e6e6"/>
 
-  <!-- Pixel Layer -->
-  <g id="pixels" transform="translate(12.45,12.55)" fill="#1f3f1f"></g>
+        <rect x="11" y="5" width="8" height="0.5" fill="#e6e6e6"/>
+        <rect x="36" y="5" width="8" height="0.5" fill="#e6e6e6"/>
+        <rect x="62" y="5" width="8" height="0.5" fill="#e6e6e6"/>
 
-</svg>
-<div style="position:absolute; bottom:40px;">
-  <input type="time" id="alarmInput">
-  <button onclick="setAlarm()">Set Alarm</button>
-  <button onclick="stopAlarm()">Stop</button>
+        <rect x="6" y="27.5" width="68" height="2.2" rx="1.1" fill="#262525"/>
+        <rect x="10" y="28.5" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
+        <rect x="10" y="28.6" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+
+        <rect x="6" y="7" width="68" height="2.2" rx="1.1" fill="#262525"/>
+        <rect x="10" y="8" width="60" height="0.9" rx="0.5" fill="#1f1f1f"/>
+        <rect x="10" y="8" width="60" height="0.3" rx="0.3" fill="#5a5a5a" opacity="0.4"/>
+
+        <rect x="7.55" y="-2.5" height="2.5" width="10.16" fill="url(#pins)" transform="rotate(90)"/>
+        <rect x="17" y="0.8" height="3.255" width="40.64" fill="url(#pins)" transform="rotate(180 32 2.4)"/>
+
+        <text fill="white" font-size="1.5">
+          <tspan y="6.8" x="0.7">1</tspan>
+          <tspan y="8.9" x="2.3">GND</tspan>
+          <tspan y="11.4" x="2.3">VCC</tspan>
+          <tspan y="14" x="2.3">SDA</tspan>
+          <tspan y="16.6" x="2.3">SCL</tspan>
+        </text>
+
+        <rect fill="url(#characters)" x="12.45" y="12.55" width="56.2" height="11.5"/>
+
+        <g id="pixels" transform="translate(12.45,12.55)" fill="#1f3f1f"></g>
+      </svg>
+    </div>
+
+    <div class="alarm-list" id="alarm-list">
+      <template id="alarm-card-template">
+        <div class="alarm-card">
+          <div class="alarm-main">
+            <div class="alarm-caption">
+              <div class="alarm-caption-dot"></div>
+              <div class="alarm-caption-text">
+                <span class="alarm-caption-status">Scheduled</span>
+                <span class="alarm-caption-label">alarm</span>
+              </div>
+            </div>
+            <div class="alarm-time-row">
+              <div class="alarm-time digit-font alarm-time-display">08:00</div>
+              <div class="alarm-meridiem alarm-meridiem-display">am</div>
+            </div>
+            <div class="alarm-label alarm-note">Tap for more info</div>
+          </div>
+          <div class="toggle-pill alarm-toggle">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </template>
+      <div class="new-alarm-card" id="new-alarm-card">
+        <div>
+          <span class="digit-font">+</span>
+          <span>new alarm</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="fab" id="fab-btn" aria-label="Add alarm">+</button>
+
+  <div class="time-picker-overlay" id="time-picker-overlay">
+    <div class="time-picker">
+      <div class="time-picker-header">
+        <div>
+          <div class="time-picker-title">Select time</div>
+          <div class="time-label">New alarm</div>
+        </div>
+        <div style="font-size:18px;color:var(--accent-soft);">
+          <span class="material-icons">alarm</span>
+        </div>
+      </div>
+
+      <div class="time-digital">
+        <div>
+          <div class="time-box">
+            <input
+              id="picker-hour"
+              class="time-number digit-font time-box-input"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="2"
+              value="08"
+              aria-label="Hour"
+            >
+          </div>
+          <div class="time-label">Hour</div>
+        </div>
+        <div class="time-colon">:</div>
+        <div>
+          <div class="time-box">
+            <input
+              id="picker-minute"
+              class="time-number digit-font time-box-input"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="2"
+              value="00"
+              aria-label="Minute"
+            >
+          </div>
+          <div class="time-label">Minute</div>
+        </div>
+        <div class="ampm-toggle">
+          <div class="chip active" id="ampm-am">a.m.</div>
+          <div class="chip" id="ampm-pm">p.m.</div>
+        </div>
+      </div>
+
+      <div class="time-input-row">
+        <span>Use keypad</span>
+        <span class="digit-font" style="font-size:13px;">08:00</span>
+      </div>
+
+      <div class="time-picker-actions">
+        <button class="btn-text secondary" id="picker-cancel">Cancel</button>
+        <button class="btn-text" id="picker-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="details-sheet" id="details-sheet">
+    <div class="details-grabber"></div>
+    <div class="details-header">
+      <div class="details-title">Alarm details</div>
+      <div class="details-subtitle" id="details-subtitle">Not scheduled</div>
+    </div>
+    <div class="details-time-row">
+      <div class="digit-font details-time-main" id="details-time">--:--</div>
+      <button class="details-edit-chip" id="details-edit">Edit</button>
+    </div>
+    <div class="details-day-row">
+      <div class="day-chip" data-day="S">S</div>
+      <div class="day-chip" data-day="M">M</div>
+      <div class="day-chip" data-day="T">T</div>
+      <div class="day-chip" data-day="W">W</div>
+      <div class="day-chip" data-day="T2">T</div>
+      <div class="day-chip" data-day="F">F</div>
+      <div class="day-chip" data-day="S2">S</div>
+    </div>
+    <div class="details-inline">
+      <span id="details-onoff-text">Alarm is off</span>
+      <button id="schedule-alarm-btn" style="display:flex;align-items:center;gap:4px;border:none;background:none;padding:0;cursor:pointer;color:inherit;">
+        <span class="material-icons" id="schedule-alarm-icon" style="font-size:18px;">calendar_today</span>
+        <span id="schedule-alarm-text">Schedule alarm</span>
+      </button>
+    </div>
+    <div class="details-settings">
+      <div class="setting-card">
+        <div class="setting-left">
+          <div class="setting-icon"><i class="fa-solid fa-pen"></i></div>
+          <div class="setting-label">Alarm name</div>
+        </div>
+        <input id="details-name-input" type="text" value="Alarm" placeholder="Alarm name"
+               style="border:1px solid #000000;border-radius:10px;padding:6px 10px;background:#ffffff;color:#000000;font:inherit;width:160px;max-width:50vw;text-align:right;">
+      </div>
+      <div class="setting-card">
+        <div class="setting-left">
+          <div class="setting-icon"><i class="fa-solid fa-bell"></i></div>
+          <div class="setting-label">Sound</div>
+        </div>
+        <div class="setting-value">Default chime</div>
+      </div>
+      
+     
+    </div>
+    <div class="details-footer">
+      <div class="details-btn" id="details-delete">Delete</div>
+      <div class="details-btn" id="details-save">Save</div>
+    </div>
+  </div>
+
+  <div class="date-picker-overlay" id="date-picker-overlay">
+    <div class="date-picker">
+      <div class="date-picker-header">
+        <span id="selected-date-label">Selected date</span>
+        <span class="material-icons" style="font-size:18px;">calendar_today</span>
+      </div>
+      <div class="calendar-wrap">
+        <div class="calendar-top">
+          <button class="cal-nav" id="cal-prev" aria-label="Previous month">
+            <span class="material-icons" style="font-size:18px;">chevron_left</span>
+          </button>
+          <div class="calendar-month" id="cal-month-label">March 2026</div>
+          <button class="cal-nav" id="cal-next" aria-label="Next month">
+            <span class="material-icons" style="font-size:18px;">chevron_right</span>
+          </button>
+        </div>
+        <div class="calendar-weekdays">
+          <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+        <div class="calendar-bottom">
+          <button class="btn-text secondary" id="cal-clear">Clear</button>
+          <button class="btn-text" id="cal-today">Today</button>
+        </div>
+      </div>
+      <div class="date-picker-actions">
+        <button class="btn-text secondary" id="date-cancel">Cancel</button>
+        <button class="btn-text" id="date-ok">OK</button>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script>
 
 
@@ -116,9 +1061,7 @@ const DOT_SPACING_Y = 0.7;
 
 const pixelGroup = document.getElementById("pixels");
 
-let alarmHour = null;     // stored in 24h
-let alarmMinute = null;
-let alarmSet = false;
+let alarms = []; // { id, hour, minute, enabled, name, scheduledDate }
 let ringing = false;
 let ringStart = 0;
 
@@ -160,7 +1103,7 @@ const font = {
 
 "G":["01110","10001","10000","10111","10001","10001","01110","00000"],
 
-/* 🔔 Bell */
+/* Bell glyph */
 "B":[
 "00000",
 "00100",
@@ -246,6 +1189,8 @@ function updateClock(){
     + " "+dayName;
 
   let bottomRow="--:--";
+  let nextAlarm = null;
+  let nextAlarmDiffMins = null;
 
   if(ringing){
 
@@ -256,30 +1201,44 @@ function updateClock(){
     }
 
   }
-  else if(alarmSet){
+  else{
+    const enabled = alarms.filter(a => a && a.enabled && Number.isFinite(a.hour) && Number.isFinite(a.minute));
+    if(enabled.length){
+      const nowMins = hour24 * 60 + minute;
+      let best = null;
+      let bestDiff = Infinity;
+      for(const a of enabled){
+        const alarmMins = a.hour * 60 + a.minute;
+        const diff = (alarmMins - nowMins + 1440) % 1440;
+        if(diff < bestDiff){
+          bestDiff = diff;
+          best = a;
+        }
+      }
+      nextAlarm = best;
+      nextAlarmDiffMins = bestDiff;
 
-    let alarmDisplay = alarmHour;
-    let alarmPeriod="AM";
+      let alarmDisplay = nextAlarm.hour;
+      let alarmPeriod = "AM";
+      if(nextAlarm.hour >= 12) alarmPeriod = "PM";
+      if(nextAlarm.hour === 0) alarmDisplay = 12;
+      else if(nextAlarm.hour > 12) alarmDisplay -= 12;
 
-    if(alarmHour >= 12) alarmPeriod="PM";
-    if(alarmHour == 0) alarmDisplay=12;
-    else if(alarmHour > 12) alarmDisplay-=12;
+      bottomRow =
+        String(alarmDisplay).padStart(2,"0")+":"+
+        String(nextAlarm.minute).padStart(2,"0")+" "+
+        alarmPeriod;
 
-    bottomRow =
-      String(alarmDisplay).padStart(2,"0")+":"+
-      String(alarmMinute).padStart(2,"0")+" "+
-      alarmPeriod;
-
-    bottomRow = bottomRow.padEnd(15," ")+"B";
+      bottomRow = bottomRow.padEnd(15," ")+"B";
+    }
   }
 
   setLCD(topRow,bottomRow);
 
-  if(alarmSet &&
-     hour24==alarmHour &&
-     minute==alarmMinute &&
-     second==0 &&
-     !ringing){
+  if(!ringing &&
+     nextAlarm &&
+     nextAlarmDiffMins === 0 &&
+     second === 0){
 
      ringing = true;
      ringStart = Date.now();
@@ -288,56 +1247,613 @@ function updateClock(){
 
 setInterval(updateClock,1000);
 
-/* ================= SET ALARM ================= */
+/* ================= SET ALARM & UI ================= */
 
-async function setAlarm(){
+const fabBtn = document.getElementById("fab-btn");
+const timePickerOverlay = document.getElementById("time-picker-overlay");
+const pickerHourInput = document.getElementById("picker-hour");
+const pickerMinuteInput = document.getElementById("picker-minute");
+const pickerCancel = document.getElementById("picker-cancel");
+const pickerOk = document.getElementById("picker-ok");
+const amChip = document.getElementById("ampm-am");
+const pmChip = document.getElementById("ampm-pm");
 
-  const input = document.getElementById("alarmInput").value;
-  if(!input) return;
+const alarmList = document.getElementById("alarm-list");
+const alarmCardTemplate = document.getElementById("alarm-card-template");
 
-  const parts = input.split(":");
-  const hour = parseInt(parts[0]);
-  const minute = parseInt(parts[1]);
+const detailsSheet = document.getElementById("details-sheet");
+const detailsSubtitle = document.getElementById("details-subtitle");
+const detailsTime = document.getElementById("details-time");
+const newAlarmCard = document.getElementById("new-alarm-card");
+const detailsEdit = document.getElementById("details-edit");
+const detailsDelete = document.getElementById("details-delete");
+const detailsSave = document.getElementById("details-save");
+const dayChips = document.querySelectorAll(".day-chip");
+const detailsNameInput = document.getElementById("details-name-input");
+const scheduleAlarmBtn = document.getElementById("schedule-alarm-btn");
+const scheduleAlarmIcon = document.getElementById("schedule-alarm-icon");
+const scheduleAlarmText = document.getElementById("schedule-alarm-text");
+const datePickerOverlay = document.getElementById("date-picker-overlay");
+const dateCancel = document.getElementById("date-cancel");
+const dateOk = document.getElementById("date-ok");
+const selectedDateLabel = document.getElementById("selected-date-label");
+const calMonthLabel = document.getElementById("cal-month-label");
+const calGrid = document.getElementById("cal-grid");
+const calPrev = document.getElementById("cal-prev");
+const calNext = document.getElementById("cal-next");
+const calClear = document.getElementById("cal-clear");
+const calToday = document.getElementById("cal-today");
 
-  await fetch(
-    "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json",
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hour: hour,
-        minute: minute
-      })
-    }
-  );
+let pickerIsPm = false;
 
-  alert("Alarm Updated!");
+function openTimePicker(){
+  timePickerOverlay.style.display = "flex";
 }
 
-/* ================= FETCH ALARM ================= */
+if(detailsTime){
+  detailsTime.style.cursor = "pointer";
+  detailsTime.addEventListener("click",function(){
+    if(!activeAlarmId) return;
+    detailsSheet.classList.remove("open");
+    openTimePickerForEdit(activeAlarmId);
+  });
+}
 
-async function fetchAlarm(){
+function closeTimePicker(){
+  timePickerOverlay.style.display = "none";
+}
 
-  try{
-    const res = await fetch(
-      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json"
-    );
-
-    const data = await res.json();
-
-    if(data && data.hour != null){
-
-      alarmHour = data.hour;
-      alarmMinute = data.minute;
-      alarmSet = true;
-    }
-
-  }catch(err){
-    console.log("Firebase fetch error");
+function setAm(isPm){
+  pickerIsPm = isPm;
+  if(isPm){
+    pmChip.classList.add("active");
+    amChip.classList.remove("active");
+  }else{
+    amChip.classList.add("active");
+    pmChip.classList.remove("active");
   }
 }
 
-setInterval(fetchAlarm,1000);
+function refreshPickerDisplays(){
+  const h = Math.min(12,Math.max(1,parseInt(pickerHourInput.value || "8",10)));
+  const m = Math.min(59,Math.max(0,parseInt(pickerMinuteInput.value || "0",10)));
+  pickerHourInput.value = String(h).padStart(2,"0");
+  pickerMinuteInput.value = String(m).padStart(2,"0");
+}
+
+function sanitizeNumeric2(el){
+  if(!el) return;
+  el.value = String(el.value || "").replace(/\D/g,"").slice(0,2);
+}
+
+function attachTimeField(el){
+  if(!el) return;
+  el.addEventListener("input",function(){
+    sanitizeNumeric2(el);
+  });
+  el.addEventListener("focus",function(){
+    try{ el.select(); }catch(e){}
+  });
+  el.addEventListener("blur",function(){
+    refreshPickerDisplays();
+  });
+}
+
+attachTimeField(pickerHourInput);
+attachTimeField(pickerMinuteInput);
+
+function generateId(){
+  return String(Date.now()) + "-" + Math.random().toString(16).slice(2);
+}
+
+function formatTime(hour24,minute){
+  let displayHour = hour24;
+  let period = "am";
+  if(hour24 >= 12) period = "pm";
+  if(hour24 === 0) displayHour = 12;
+  else if(hour24 > 12) displayHour -= 12;
+  return {
+    hh: String(displayHour).padStart(2,"0"),
+    mm: String(minute).padStart(2,"0"),
+    period
+  };
+}
+
+function normalizeAlarm(a){
+  if(!a || typeof a !== "object") return null;
+  if(typeof a.id !== "string") a.id = generateId();
+  if(!Number.isFinite(a.hour)) a.hour = 8;
+  if(!Number.isFinite(a.minute)) a.minute = 0;
+  a.enabled = !!a.enabled;
+  a.name = typeof a.name === "string" ? a.name : "Alarm";
+  a.scheduledDate = typeof a.scheduledDate === "string" ? a.scheduledDate : null; // YYYY-MM-DD
+  return a;
+}
+
+function loadAlarms(){
+  try{
+    const raw = localStorage.getItem("alarms");
+    const parsed = raw ? JSON.parse(raw) : [];
+    alarms = Array.isArray(parsed) ? parsed.map(normalizeAlarm).filter(Boolean) : [];
+  }catch(e){
+    alarms = [];
+  }
+}
+
+async function syncAlarmsToFirebase(){
+  try{
+    await fetch(
+      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json",
+      {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(alarms)
+      }
+    );
+  }catch(e){
+    // ignore
+  }
+}
+
+function getNextEnabledAlarm(){
+  const enabled = alarms.filter(a => a && a.enabled && Number.isFinite(a.hour) && Number.isFinite(a.minute));
+  if(!enabled.length) return null;
+
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  let best = null;
+  let bestDiff = Infinity;
+
+  for(const a of enabled){
+    const alarmMins = a.hour * 60 + a.minute;
+    const diff = (alarmMins - nowMins + 1440) % 1440;
+    if(diff < bestDiff){
+      bestDiff = diff;
+      best = a;
+    }
+  }
+
+  return best;
+}
+
+async function syncLegacyNextAlarmToFirebase(){
+  const next = getNextEnabledAlarm();
+  try{
+    if(!next){
+      await fetch(
+        "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json",
+        { method:"DELETE" }
+      );
+      return;
+    }
+
+    await fetch(
+      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json",
+      {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ hour: next.hour, minute: next.minute })
+      }
+    );
+  }catch(e){
+    // ignore
+  }
+}
+
+function persistAlarms(){
+  try{
+    localStorage.setItem("alarms",JSON.stringify(alarms));
+  }catch(e){
+    // ignore
+  }
+  syncAlarmsToFirebase();
+  syncLegacyNextAlarmToFirebase();
+}
+
+async function fetchAlarmsOnce(){
+  try{
+    const res = await fetch(
+      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json"
+    );
+    const data = await res.json();
+    if(Array.isArray(data)){
+      alarms = data.map(normalizeAlarm).filter(Boolean);
+      persistAlarms();
+      renderAlarms();
+    }else{
+      // backwards compatibility: old single-alarm schema at /alarm.json
+      try{
+        const resLegacy = await fetch(
+          "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json"
+        );
+        const legacy = await resLegacy.json();
+        if(legacy && legacy.hour != null){
+          alarms = [normalizeAlarm({
+            id: generateId(),
+            hour: legacy.hour,
+            minute: legacy.minute,
+            enabled: true,
+            name: "Alarm"
+          })].filter(Boolean);
+          persistAlarms();
+          renderAlarms();
+        }
+      }catch(e2){
+        // ignore
+      }
+    }
+  }catch(e){
+    // ignore
+  }
+}
+
+let activeAlarmId = null;
+let timePickerTargetId = null; // null => create
+
+function getAlarmById(id){
+  return alarms.find(a => a.id === id) || null;
+}
+
+function renderAlarms(){
+  if(!alarmList || !alarmCardTemplate || !newAlarmCard) return;
+
+  alarmList.querySelectorAll(".alarm-card[data-id]").forEach(el => el.remove());
+
+  for(const alarm of alarms){
+    const node = alarmCardTemplate.content.firstElementChild.cloneNode(true);
+    node.dataset.id = alarm.id;
+
+    const statusEl = node.querySelector(".alarm-caption-status");
+    const labelEl = node.querySelector(".alarm-caption-label");
+    const timeEl = node.querySelector(".alarm-time-display");
+    const merEl = node.querySelector(".alarm-meridiem-display");
+    const noteEl = node.querySelector(".alarm-note");
+    const toggleEl = node.querySelector(".alarm-toggle");
+
+    if(statusEl) statusEl.textContent = alarm.enabled ? "Scheduled" : "Off";
+    if(labelEl) labelEl.textContent = alarm.name || "Alarm";
+
+    const t = formatTime(alarm.hour,alarm.minute);
+    if(timeEl) timeEl.textContent = t.hh + ":" + t.mm;
+    if(merEl) merEl.textContent = t.period;
+    if(noteEl) noteEl.textContent = "Tap for more info";
+
+    if(toggleEl){
+      toggleEl.classList.toggle("on",!!alarm.enabled);
+      toggleEl.addEventListener("click",function(ev){
+        ev.stopPropagation();
+        alarm.enabled = !alarm.enabled;
+        persistAlarms();
+        renderAlarms();
+        refreshDetails();
+      });
+    }
+
+    node.addEventListener("click",function(){
+      openDetails(alarm.id);
+    });
+
+    alarmList.insertBefore(node,newAlarmCard);
+  }
+}
+
+function refreshDetails(){
+  if(!activeAlarmId) return;
+  const alarm = getAlarmById(activeAlarmId);
+  if(!alarm){
+    detailsSheet.classList.remove("open");
+    activeAlarmId = null;
+    return;
+  }
+
+  const t = formatTime(alarm.hour,alarm.minute);
+  if(detailsTime) detailsTime.textContent = t.hh + ":" + t.mm + " " + t.period.toUpperCase();
+  if(detailsNameInput) detailsNameInput.value = alarm.name || "Alarm";
+
+  const onOff = document.getElementById("details-onoff-text");
+  if(onOff) onOff.textContent = alarm.enabled ? "Alarm is on" : "Alarm is off";
+
+  updateScheduleButton();
+}
+
+function openDetails(alarmId){
+  activeAlarmId = alarmId;
+  refreshDetails();
+  detailsSheet.classList.add("open");
+}
+
+function openTimePickerForNew(){
+  timePickerTargetId = null;
+  pickerHourInput.value = 8;
+  pickerMinuteInput.value = 0;
+  setAm(false);
+  refreshPickerDisplays();
+  openTimePicker();
+}
+
+function openTimePickerForEdit(alarmId){
+  const alarm = getAlarmById(alarmId);
+  if(!alarm) return;
+  timePickerTargetId = alarmId;
+
+  pickerIsPm = alarm.hour >= 12;
+  let displayHour = alarm.hour;
+  if(displayHour === 0) displayHour = 12;
+  else if(displayHour > 12) displayHour -= 12;
+
+  pickerHourInput.value = displayHour;
+  pickerMinuteInput.value = alarm.minute;
+  setAm(pickerIsPm);
+  refreshPickerDisplays();
+  openTimePicker();
+}
+
+fabBtn.addEventListener("click",openTimePickerForNew);
+newAlarmCard.addEventListener("click",openTimePickerForNew);
+pickerCancel.addEventListener("click",closeTimePicker);
+
+pickerOk.addEventListener("click",async function(){
+  refreshPickerDisplays();
+  let hour = parseInt(pickerHourInput.value || "8",10);
+  const minute = parseInt(pickerMinuteInput.value || "0",10);
+
+  if(hour === 12) hour = 0;
+  if(pickerIsPm) hour += 12;
+
+  if(timePickerTargetId){
+    const alarm = getAlarmById(timePickerTargetId);
+    if(alarm){
+      alarm.hour = hour;
+      alarm.minute = minute;
+      alarm.enabled = true;
+    }
+  }else{
+    alarms.push(normalizeAlarm({
+      id: generateId(),
+      hour,
+      minute,
+      enabled: true,
+      name: "Alarm",
+      scheduledDate: null
+    }));
+  }
+
+  persistAlarms();
+  renderAlarms();
+  refreshDetails();
+  closeTimePicker();
+});
+
+amChip.addEventListener("click",function(){ setAm(false); });
+pmChip.addEventListener("click",function(){ setAm(true); });
+
+dayChips.forEach(function(chip){
+  chip.addEventListener("click",function(){
+    chip.classList.toggle("active");
+  });
+});
+
+let selectedDate = null; // Date being edited in modal
+let viewYear = (new Date()).getFullYear();
+let viewMonth = (new Date()).getMonth();
+
+function updateScheduleButton(){
+  if(!scheduleAlarmBtn || !scheduleAlarmText || !scheduleAlarmIcon) return;
+  const alarm = activeAlarmId ? getAlarmById(activeAlarmId) : null;
+  const isScheduled = !!(alarm && alarm.scheduledDate);
+  scheduleAlarmBtn.disabled = !alarm;
+  scheduleAlarmBtn.style.opacity = alarm ? "1" : "0.4";
+  scheduleAlarmBtn.style.pointerEvents = alarm ? "auto" : "none";
+  if(isScheduled){
+    scheduleAlarmText.textContent = "Cancel";
+    scheduleAlarmIcon.textContent = "cancel";
+  }else{
+    scheduleAlarmText.textContent = "Schedule alarm";
+    scheduleAlarmIcon.textContent = "calendar_today";
+  }
+}
+
+function formatMonthYear(year,monthIndex){
+  const dt = new Date(year,monthIndex,1);
+  return dt.toLocaleString(undefined,{ month:"long", year:"numeric" });
+}
+
+function formatSelectedDate(dt){
+  return dt.toLocaleDateString(undefined,{ year:"numeric", month:"long", day:"numeric" });
+}
+
+function toISODateLocal(dt){
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,"0");
+  const d = String(dt.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseISODateLocal(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  if(!m) return null;
+  const y = parseInt(m[1],10);
+  const mo = parseInt(m[2],10) - 1;
+  const d = parseInt(m[3],10);
+  return new Date(y,mo,d);
+}
+
+function isSameDay(a,b){
+  return a && b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function renderCalendar(){
+  if(!calGrid || !calMonthLabel) return;
+
+  calMonthLabel.textContent = formatMonthYear(viewYear,viewMonth);
+  if(selectedDateLabel){
+    selectedDateLabel.textContent = selectedDate ? formatSelectedDate(selectedDate) : "Selected date";
+  }
+
+  calGrid.innerHTML = "";
+  const firstDay = new Date(viewYear,viewMonth,1).getDay(); // 0=Sun
+  const daysInMonth = new Date(viewYear,viewMonth+1,0).getDate();
+  const daysInPrevMonth = new Date(viewYear,viewMonth,0).getDate();
+
+  // 6 rows * 7 cols = 42 cells
+  for(let cell=0; cell<42; cell++){
+    const dayNum = cell - firstDay + 1;
+    let cellYear = viewYear;
+    let cellMonth = viewMonth;
+    let dateNum = dayNum;
+    let isOut = false;
+
+    if(dayNum < 1){
+      isOut = true;
+      dateNum = daysInPrevMonth + dayNum;
+      cellMonth = viewMonth - 1;
+      if(cellMonth < 0){ cellMonth = 11; cellYear = viewYear - 1; }
+    }else if(dayNum > daysInMonth){
+      isOut = true;
+      dateNum = dayNum - daysInMonth;
+      cellMonth = viewMonth + 1;
+      if(cellMonth > 11){ cellMonth = 0; cellYear = viewYear + 1; }
+    }
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cal-day" + (isOut ? " out" : "");
+    btn.textContent = String(dateNum);
+
+    const dt = new Date(cellYear,cellMonth,dateNum);
+    if(selectedDate && isSameDay(selectedDate,dt)){
+      btn.classList.add("selected");
+    }
+
+    btn.addEventListener("click",function(){
+      selectedDate = dt;
+      viewYear = dt.getFullYear();
+      viewMonth = dt.getMonth();
+      renderCalendar();
+    });
+
+    calGrid.appendChild(btn);
+  }
+}
+
+function openDatePicker(){
+  const alarm = activeAlarmId ? getAlarmById(activeAlarmId) : null;
+  if(!alarm) return;
+  if(datePickerOverlay){
+    datePickerOverlay.style.display = "flex";
+  }
+  selectedDate = alarm.scheduledDate ? parseISODateLocal(alarm.scheduledDate) : (selectedDate || new Date());
+  const base = selectedDate || new Date();
+  viewYear = base.getFullYear();
+  viewMonth = base.getMonth();
+  renderCalendar();
+}
+
+if(scheduleAlarmBtn){
+  scheduleAlarmBtn.addEventListener("click",function(){
+    const alarm = activeAlarmId ? getAlarmById(activeAlarmId) : null;
+    if(!alarm) return;
+    if(alarm.scheduledDate){
+      alarm.scheduledDate = null;
+      persistAlarms();
+      updateScheduleButton();
+      return;
+    }
+    openDatePicker();
+  });
+}
+
+function closeDatePicker(){
+  if(datePickerOverlay){
+    datePickerOverlay.style.display = "none";
+  }
+}
+
+if(dateCancel) dateCancel.addEventListener("click",closeDatePicker);
+if(dateOk) dateOk.addEventListener("click",function(){
+  const alarm = activeAlarmId ? getAlarmById(activeAlarmId) : null;
+  if(alarm){
+    alarm.scheduledDate = selectedDate ? toISODateLocal(selectedDate) : null;
+    persistAlarms();
+    updateScheduleButton();
+  }
+  closeDatePicker();
+});
+if(datePickerOverlay){
+  datePickerOverlay.addEventListener("click",function(e){
+    if(e.target === datePickerOverlay) closeDatePicker();
+  });
+}
+
+if(calPrev){
+  calPrev.addEventListener("click",function(){
+    viewMonth -= 1;
+    if(viewMonth < 0){ viewMonth = 11; viewYear -= 1; }
+    renderCalendar();
+  });
+}
+
+if(calNext){
+  calNext.addEventListener("click",function(){
+    viewMonth += 1;
+    if(viewMonth > 11){ viewMonth = 0; viewYear += 1; }
+    renderCalendar();
+  });
+}
+
+if(calToday){
+  calToday.addEventListener("click",function(){
+    selectedDate = new Date();
+    viewYear = selectedDate.getFullYear();
+    viewMonth = selectedDate.getMonth();
+    renderCalendar();
+  });
+}
+
+if(calClear){
+  calClear.addEventListener("click",function(){
+    selectedDate = null;
+    renderCalendar();
+  });
+}
+
+updateScheduleButton();
+
+detailsEdit.addEventListener("click",function(){
+  if(!activeAlarmId) return;
+  detailsSheet.classList.remove("open");
+  openTimePickerForEdit(activeAlarmId);
+});
+
+detailsDelete.addEventListener("click",function(){
+  if(!activeAlarmId) return;
+  alarms = alarms.filter(a => a.id !== activeAlarmId);
+  persistAlarms();
+  renderAlarms();
+  detailsSheet.classList.remove("open");
+  activeAlarmId = null;
+});
+
+detailsSave.addEventListener("click",function(){
+  if(activeAlarmId){
+    const alarm = getAlarmById(activeAlarmId);
+    if(alarm && detailsNameInput){
+      alarm.name = String(detailsNameInput.value || "Alarm").trim() || "Alarm";
+      persistAlarms();
+      renderAlarms();
+      refreshDetails();
+    }
+  }
+  detailsSheet.classList.remove("open");
+});
+
+refreshPickerDisplays();
+loadAlarms();
+renderAlarms();
+fetchAlarmsOnce();
 
 
 </script>
