@@ -103,6 +103,11 @@
 </div>
 <script>
 
+/* ================= SUPABASE ================= */
+
+const SUPABASE_URL = "https://nqaebgnsiojckerjedwu.supabase.co";
+const SUPABASE_KEY = "PASTE_YOUR_NEW_ANON_KEY_HERE";
+
 /* ================= LCD CONFIG ================= */
 
 const COLS = 16;
@@ -239,7 +244,7 @@ function updateClock(){
 
   const dayName = days[now.getDay()];
 
-  const topRow = hh+":"+mm+":"+ss+" "+period+" "+dayName;
+  const topRow = hh+":"+mm+":"+ss+" "+period+" "+" "+" "+dayName;
 
   let bottomRow="--:--";
 
@@ -298,6 +303,29 @@ async function setAlarm(){
   alert("Alarm Updated!");
 }
 
+/* ================= FETCH ALARM FROM FIREBASE ================= */
+
+async function fetchAlarm(){
+
+  try{
+    const res = await fetch(
+      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json"
+    );
+
+    const data = await res.json();
+
+    if(data && data.hour != null){
+
+      alarmHour = data.hour;       // stored in 24h
+      alarmMinute = data.minute;
+      alarmSet = true;
+    }
+
+  }catch(err){
+    console.log("Firebase fetch error");
+  }
+}
+setInterval(fetchAlarm, 3000);
 </script>
 </body>
 </html>
