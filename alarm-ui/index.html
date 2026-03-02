@@ -96,8 +96,13 @@
   <g id="pixels" transform="translate(12.45,12.55)" fill="#1f3f1f"></g>
 
 </svg>
+<div style="position:absolute; bottom:40px;">
+  <input type="time" id="alarmInput">
+  <button onclick="setAlarm()">Set Alarm</button>
+  <button onclick="stopAlarm()">Stop</button>
+</div>
 <script>
-const API = "https://yourproject.vercel.app/api/lcd";
+
 
 const COLS = 16;
 const CELL_W = 3.55;
@@ -108,40 +113,61 @@ const DOT_H = 0.65;
 const DOT_SPACING_X = 0.6;
 const DOT_SPACING_Y = 0.7;
 
+const pixelGroup = document.getElementById("pixels");
+
+let alarmHour = null;
+let alarmMinute = null;
+let alarmActive = false;
+let ringing = false;
+
+/* ================= FONT ================= */
+
 const font = {
+"0":["01110","10001","10011","10101","11001","10001","01110","00000"],
+"1":["00100","01100","00100","00100","00100","00100","01110","00000"],
+"2":["01110","10001","00001","00010","00100","01000","11111","00000"],
+"3":["11110","00001","00001","01110","00001","00001","11110","00000"],
+"4":["00010","00110","01010","10010","11111","00010","00010","00000"],
+"5":["11111","10000","11110","00001","00001","10001","01110","00000"],
+"6":["00110","01000","10000","11110","10001","10001","01110","00000"],
+"7":["11111","00001","00010","00100","01000","01000","01000","00000"],
+"8":["01110","10001","10001","01110","10001","10001","01110","00000"],
+"9":["01110","10001","10001","01111","00001","00010","11100","00000"],
+":":["00000","00100","00100","00000","00100","00100","00000","00000"],
 "A":["01110","10001","10001","11111","10001","10001","10001","00000"],
-"C":["01110","10001","10000","10000","10000","10001","01110","00000"],
-"D":["11110","10001","10001","10001","10001","10001","11110","00000"],
-"E":["11111","10000","10000","11110","10000","10000","11111","00000"],
-"G":["01110","10001","10000","10111","10001","10001","01110","00000"],
-"I":["11111","00100","00100","00100","00100","00100","11111","00000"],
 "L":["10000","10000","10000","10000","10000","10000","11111","00000"],
+"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
+"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
+"P":["11110","10001","10001","11110","10000","10000","10000","00000"],
+"S":["01111","10000","10000","01110","00001","00001","11110","00000"],
+"U":["10001","10001","10001","10001","10001","10001","01110","00000"],
 "N":["10001","11001","10101","10011","10001","10001","10001","00000"],
-"O":["01110","10001","10001","10001","10001","10001","01110","00000"],
 "T":["11111","00100","00100","00100","00100","00100","00100","00000"],
-".":["00000","00000","00000","00000","00000","00100","00100","00000"],
-"[":["01110","01000","01000","01000","01000","01000","01110","00000"],
-"]":["01110","00010","00010","00010","00010","00010","01110","00000"],
-"■":["11111","11111","11111","11111","11111","11111","11111","00000"],
+"H":["10001","10001","10001","11111","10001","10001","10001","00000"],
+"F":["11111","10000","10000","11110","10000","10000","10000","00000"],
+"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
+"W":["10001","10001","10001","10101","10101","11011","10001","00000"],
+"E":["11111","10000","10000","11110","10000","10000","11111","00000"],
+"D":["11110","10001","10001","10001","10001","10001","11110","00000"],
 " ":["00000","00000","00000","00000","00000","00000","00000","00000"]
 };
 
-const pixelGroup = document.getElementById("pixels");
-let connected = false;
+/* ================= LCD DRAW ================= */
 
 function clearDisplay(){
-  pixelGroup.innerHTML = "";
+  pixelGroup.innerHTML="";
 }
 
-function drawChar(char, col, row){
+function drawChar(char,col,row){
   const pattern = font[char] || font[" "];
+
   for(let y=0;y<8;y++){
     for(let x=0;x<5;x++){
       if(pattern[y][x]==="1"){
         const px = col*CELL_W + x*DOT_SPACING_X;
         const py = row*CELL_H + y*DOT_SPACING_Y;
 
-        const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
         rect.setAttribute("x",px);
         rect.setAttribute("y",py);
         rect.setAttribute("width",DOT_W);
@@ -158,43 +184,104 @@ function print(text,row){
   }
 }
 
-function setLCD(line1,line2){
+function setLCD(l1,l2){
   clearDisplay();
-  print(line1.padEnd(16," "),0);
-  print(line2.padEnd(16," "),1);
+  print(l1.padEnd(16," "),0);
+  print(l2.padEnd(16," "),1);
 }
 
-async function fetchLCD(){
-  try{
-    const res = await fetch(API);
-    const data = await res.json();
-    connected = true;
-    setLCD(data.line1, data.line2);
-  }catch(e){
-    connected = false;
+/* ================= TIME ================= */
+
+const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+function updateClock(){
+
+  const now=new Date();
+  let hour=now.getHours();
+  const minute=now.getMinutes();
+  const second=now.getSeconds();
+  const day=days[now.getDay()];
+
+  let period="AM";
+  if(hour>=12) period="PM";
+  if(hour==0) hour=12;
+  else if(hour>12) hour-=12;
+
+  const hh=String(hour).padStart(2,"0");
+  const mm=String(minute).padStart(2,"0");
+  const ss=String(second).padStart(2,"0");
+
+  const topRow=hh+":"+mm+":"+ss+" "+period;
+
+  let bottomRow="AL --:--";
+
+  if(alarmActive){
+    bottomRow="AL "+String(alarmHour).padStart(2,"0")+":"+String(alarmMinute).padStart(2,"0");
+  }
+
+  if(ringing){
+    bottomRow="*** ALARM ***";
+  }
+
+  setLCD(topRow,bottomRow);
+
+  if(alarmActive &&
+     now.getHours()==alarmHour &&
+     minute==alarmMinute &&
+     second==0){
+      ringing=true;
   }
 }
 
-/* 🔥 CONNECTING ANIMATION */
-let progress = 0;
+setInterval(updateClock,1000);
 
-function loadingAnimation(){
-  if(connected) return;
+/* ================= ALARM UI ================= */
 
-  let bar = "";
-  for(let i=0;i<10;i++){
-    if(i < progress) bar += "■";
-    else bar += " ";
-  }
+function setAlarm(){
 
-  setLCD("CONNECTING...", "[" + bar + "]");
+  const input=document.getElementById("alarmInput").value;
+  if(!input) return;
 
-  progress++;
-  if(progress > 10) progress = 0;
+  const parts=input.split(":");
+  alarmHour=parseInt(parts[0]);
+  alarmMinute=parseInt(parts[1]);
+  alarmActive=true;
+  ringing=false;
 }
 
-setInterval(fetchLCD,1500);
-setInterval(loadingAnimation,300);
+function stopAlarm(){
+  ringing=false;
+}
+
+</script>
+
+<script>
+
+const SUPABASE_URL = "nqaebgnsiojckerjedwu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYWViZ25zaW9qY2tlcmplZHd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjY5MTUsImV4cCI6MjA4ODAwMjkxNX0.NkFXWKE9hRs2Bms7HyOBjPPyTFe2FDDd0cv5MqviQy8";
+
+async function setAlarm(){
+
+  const input = document.getElementById("alarmInput").value;
+  if(!input) return;
+
+  const parts = input.split(":");
+  const hour = parseInt(parts[0]);
+  const minute = parseInt(parts[1]);
+
+  await fetch(SUPABASE_URL + "/rest/v1/alarm?id=eq.1", {
+    method: "PATCH",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ hour: hour, minute: minute })
+  });
+
+  alert("Alarm Updated");
+}
+
 </script>
 
 </body>
