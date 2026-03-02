@@ -779,6 +779,70 @@
     margin-left:6px;
   }
 
+  /* ======== Mobile layout tweaks ======== */
+  @media (max-width: 600px){
+    body{
+      padding:16px 10px 24px;
+      align-items:stretch;
+    }
+
+    .phone-shell{
+      max-width:420px;
+      padding-bottom:24px;
+    }
+
+    .screen-title{
+      font-size:22px;
+    }
+
+    .lcd-label{
+      font-size:24px;
+      margin-bottom:4px;
+    }
+
+    .lcd-wrap svg{
+      width:100%;
+      height:auto;
+    }
+
+    .alarm-list{
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+
+    .alarm-card,
+    .new-alarm-card{
+      padding:12px 12px 14px;
+    }
+
+    .details-sheet{
+      border-radius:18px 18px 0 0;
+      padding:14px 14px 18px;
+    }
+
+    .details-time-main{
+      font-size:26px;
+    }
+
+    .time-picker{
+      max-width:340px;
+      padding:16px 14px 12px;
+    }
+
+    .time-box{
+      min-width:60px;
+    }
+
+    .time-number{
+      font-size:24px;
+    }
+
+    .date-picker{
+      max-width:340px;
+      padding:16px 14px 14px;
+    }
+  }
+
   
 </style>
 </head>
