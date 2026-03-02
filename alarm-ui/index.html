@@ -103,10 +103,6 @@
 </div>
 <script>
 
-/* ================= SUPABASE ================= */
-
-const SUPABASE_URL = "https://nqaebgnsiojckerjedwu.supabase.co";
-const SUPABASE_KEY = "PASTE_YOUR_NEW_ANON_KEY_HERE";
 
 /* ================= LCD CONFIG ================= */
 
@@ -124,6 +120,7 @@ let alarmHour = null;     // stored in 24h
 let alarmMinute = null;
 let alarmSet = false;
 let ringing = false;
+let ringStart = 0;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
@@ -154,16 +151,16 @@ const font = {
 "F":["11111","10000","10000","11110","10000","10000","10000","00000"],
 "E":["11111","10000","10000","11110","10000","10000","11111","00000"],
 "D":["11110","10001","10001","10001","10001","10001","11110","00000"],
-"O":["01110",
-     "10001",
-     "10001",
-     "10001",
-     "10001",
-     "10001",
-     "01110",
-     "00000"],
+"O":["01110","10001","10001","10001","10001","10001","01110","00000"],
+"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
 
-/* 🔔 YOUR EXACT BELL BITMAP */
+"I":["11111","00100","00100","00100","00100","00100","11111","00000"],
+
+"N":["10001","11001","10101","10011","10001","10001","10001","00000"],
+
+"G":["01110","10001","10000","10111","10001","10001","01110","00000"],
+
+/* 🔔 Bell */
 "B":[
 "00000",
 "00100",
@@ -230,7 +227,6 @@ function updateClock(){
   const minute = now.getMinutes();
   const second = now.getSeconds();
 
-  // Convert to 12h
   let displayHour = hour24;
   let period = "AM";
 
@@ -244,11 +240,23 @@ function updateClock(){
 
   const dayName = days[now.getDay()];
 
-  const topRow = hh+":"+mm+":"+ss+" "+period+" "+" "+" "+dayName;
+  const topRow =
+    (hh+":"+mm+":"+ss+" "+period)
+    .padEnd(13," ")
+    + " "+dayName;
 
   let bottomRow="--:--";
 
-  if(alarmSet){
+  if(ringing){
+
+    bottomRow = "  RINGING !!!  ";
+
+    if(Date.now() - ringStart >= 5000){
+      ringing = false;
+    }
+
+  }
+  else if(alarmSet){
 
     let alarmDisplay = alarmHour;
     let alarmPeriod="AM";
@@ -270,14 +278,17 @@ function updateClock(){
   if(alarmSet &&
      hour24==alarmHour &&
      minute==alarmMinute &&
-     second==0){
-       ringing=true;
+     second==0 &&
+     !ringing){
+
+     ringing = true;
+     ringStart = Date.now();
   }
 }
 
 setInterval(updateClock,1000);
 
-/* ================= ALARM ================= */
+/* ================= SET ALARM ================= */
 
 async function setAlarm(){
 
@@ -303,7 +314,7 @@ async function setAlarm(){
   alert("Alarm Updated!");
 }
 
-/* ================= FETCH ALARM FROM FIREBASE ================= */
+/* ================= FETCH ALARM ================= */
 
 async function fetchAlarm(){
 
@@ -316,7 +327,7 @@ async function fetchAlarm(){
 
     if(data && data.hour != null){
 
-      alarmHour = data.hour;       // stored in 24h
+      alarmHour = data.hour;
       alarmMinute = data.minute;
       alarmSet = true;
     }
@@ -325,7 +336,10 @@ async function fetchAlarm(){
     console.log("Firebase fetch error");
   }
 }
-setInterval(fetchAlarm, 3000);
+
+setInterval(fetchAlarm,1000);
+
+
 </script>
 </body>
 </html>
