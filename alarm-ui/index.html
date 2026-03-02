@@ -103,11 +103,16 @@
 </div>
 <script>
 
+/* ================= SUPABASE ================= */
+
+const SUPABASE_URL = "https://nqaebgnsiojckerjedwu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYWViZ25zaW9qY2tlcmplZHd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjY5MTUsImV4cCI6MjA4ODAwMjkxNX0.NkFXWKE9hRs2Bms7HyOBjPPyTFe2FDDd0cv5MqviQy8";
+
+/* ================= LCD CONFIG ================= */
 
 const COLS = 16;
 const CELL_W = 3.55;
 const CELL_H = 5.95;
-
 const DOT_W = 0.55;
 const DOT_H = 0.65;
 const DOT_SPACING_X = 0.6;
@@ -145,7 +150,6 @@ const font = {
 "T":["11111","00100","00100","00100","00100","00100","00100","00000"],
 "H":["10001","10001","10001","11111","10001","10001","10001","00000"],
 "F":["11111","10000","10000","11110","10000","10000","10000","00000"],
-"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
 "W":["10001","10001","10001","10101","10101","11011","10001","00000"],
 "E":["11111","10000","10000","11110","10000","10000","11111","00000"],
 "D":["11110","10001","10001","10001","10001","10001","11110","00000"],
@@ -160,14 +164,13 @@ function clearDisplay(){
 
 function drawChar(char,col,row){
   const pattern = font[char] || font[" "];
-
   for(let y=0;y<8;y++){
     for(let x=0;x<5;x++){
       if(pattern[y][x]==="1"){
         const px = col*CELL_W + x*DOT_SPACING_X;
         const py = row*CELL_H + y*DOT_SPACING_Y;
-
-        const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
+        const rect = document.createElementNS(
+          "http://www.w3.org/2000/svg","rect");
         rect.setAttribute("x",px);
         rect.setAttribute("y",py);
         rect.setAttribute("width",DOT_W);
@@ -192,15 +195,12 @@ function setLCD(l1,l2){
 
 /* ================= TIME ================= */
 
-const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
-
 function updateClock(){
 
-  const now=new Date();
-  let hour=now.getHours();
-  const minute=now.getMinutes();
-  const second=now.getSeconds();
-  const day=days[now.getDay()];
+  const now = new Date();
+  let hour = now.getHours();
+  const minute = now.getMinutes();
+  const second = now.getSeconds();
 
   let period="AM";
   if(hour>=12) period="PM";
@@ -211,19 +211,16 @@ function updateClock(){
   const mm=String(minute).padStart(2,"0");
   const ss=String(second).padStart(2,"0");
 
-  const topRow=hh+":"+mm+":"+ss+" "+period;
+  let bottom="AL --:--";
 
-  let bottomRow="AL --:--";
+  if(alarmActive)
+    bottom="AL "+String(alarmHour).padStart(2,"0")+":"+
+            String(alarmMinute).padStart(2,"0");
 
-  if(alarmActive){
-    bottomRow="AL "+String(alarmHour).padStart(2,"0")+":"+String(alarmMinute).padStart(2,"0");
-  }
+  if(ringing)
+    bottom="*** ALARM ***";
 
-  if(ringing){
-    bottomRow="*** ALARM ***";
-  }
-
-  setLCD(topRow,bottomRow);
+  setLCD(hh+":"+mm+":"+ss+" "+period, bottom);
 
   if(alarmActive &&
      now.getHours()==alarmHour &&
@@ -235,18 +232,40 @@ function updateClock(){
 
 setInterval(updateClock,1000);
 
-/* ================= ALARM UI ================= */
+/* ================= SET ALARM ================= */
 
-function setAlarm(){
+async function setAlarm(){
 
   const input=document.getElementById("alarmInput").value;
   if(!input) return;
 
   const parts=input.split(":");
+
   alarmHour=parseInt(parts[0]);
   alarmMinute=parseInt(parts[1]);
   alarmActive=true;
   ringing=false;
+
+  try{
+    await fetch(
+      SUPABASE_URL+"/rest/v1/alarm?id=eq.1",
+      {
+        method:"PATCH",
+        headers:{
+          "apikey":SUPABASE_KEY,
+          "Authorization":"Bearer "+SUPABASE_KEY,
+          "Content-Type":"application/json",
+          "Prefer":"return=minimal"
+        },
+        body:JSON.stringify({
+          hour:alarmHour,
+          minute:alarmMinute
+        })
+      }
+    );
+  }catch(e){
+    console.log("DB error");
+  }
 }
 
 function stopAlarm(){
@@ -254,35 +273,5 @@ function stopAlarm(){
 }
 
 </script>
-
-<script>
-
-const SUPABASE_URL = "https://nqaebgnsiojckerjedwu.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYWViZ25zaW9qY2tlcmplZHd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjY5MTUsImV4cCI6MjA4ODAwMjkxNX0.NkFXWKE9hRs2Bms7HyOBjPPyTFe2FDDd0cv5MqviQy8";
-
-async function setAlarm(){
-
-  const input = document.getElementById("alarmInput").value;
-  if(!input) return;
-
-  const parts = input.split(":");
-  const hour = parseInt(parts[0]);
-  const minute = parseInt(parts[1]);
-
-  await fetch(SUPABASE_URL + "/rest/v1/alarm?id=eq.1", {
-    method: "PATCH",
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ hour: hour, minute: minute })
-  });
-
-  alert("Alarm Updated");
-}
-
-</script>
-
 </body>
 </html>
