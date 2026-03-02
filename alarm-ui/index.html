@@ -103,11 +103,6 @@
 </div>
 <script>
 
-/* ================= SUPABASE ================= */
-
-const SUPABASE_URL = "https://bwvqqmhybjplowzoutau.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3dnFxbWh5YmpwbG93em91dGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Mzc0NTQsImV4cCI6MjA4ODAxMzQ1NH0.F0EOc9u_ltqtmlEYdhr7CV1tLCAmotHDObs-GUxZZLg";
-
 /* ================= LCD CONFIG ================= */
 
 const COLS = 16;
@@ -279,19 +274,28 @@ setInterval(updateClock,1000);
 
 /* ================= ALARM ================= */
 
-function setAlarm(){
-  const input=document.getElementById("alarmInput").value;
+async function setAlarm(){
+
+  const input = document.getElementById("alarmInput").value;
   if(!input) return;
 
-  const parts=input.split(":");
+  const parts = input.split(":");
+  const hour = parseInt(parts[0]);
+  const minute = parseInt(parts[1]);
 
-  alarmHour=parseInt(parts[0]);
-  alarmMinute=parseInt(parts[1]);
-  alarmSet=true;
-}
+  await fetch(
+    "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json",
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        hour: hour,
+        minute: minute
+      })
+    }
+  );
 
-function stopAlarm(){
-  ringing=false;
+  alert("Alarm Updated!");
 }
 
 </script>
