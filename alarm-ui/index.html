@@ -120,9 +120,10 @@ const DOT_SPACING_Y = 0.7;
 
 const pixelGroup = document.getElementById("pixels");
 
-let alarmHour = null;     // 24h format
+let alarmHour = null;     // stored in 24h
 let alarmMinute = null;
 let alarmSet = false;
+let ringing = false;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
@@ -162,7 +163,7 @@ const font = {
      "01110",
      "00000"],
 
-/* 🔔 YOUR EXACT BELL */
+/* 🔔 YOUR EXACT BELL BITMAP */
 "B":[
 "00000",
 "00100",
@@ -208,15 +209,15 @@ function drawChar(char,col,row){
 }
 
 function print(text,row){
-  for(let i=0;i<COLS;i++){
-    drawChar(text[i] || " ",i,row);
+  for(let i=0;i<text.length && i<COLS;i++){
+    drawChar(text[i],i,row);
   }
 }
 
 function setLCD(l1,l2){
   clearDisplay();
-  print(l1,l1 ? 0 : 0);
-  print(l2,l2 ? 1 : 1);
+  print(l1.padEnd(16," "),0);
+  print(l2.padEnd(16," "),1);
 }
 
 /* ================= CLOCK ================= */
@@ -241,15 +242,11 @@ function updateClock(){
   const mm = String(minute).padStart(2,"0");
   const ss = String(second).padStart(2,"0");
 
-  const dayName = days[now.getDay()] || "  ";
+  const dayName = days[now.getDay()];
 
-  // ===== EXACT 16 CHAR TOP ROW =====
-  let topRow = hh+":"+mm+":"+ss+" "+period;
-  topRow = topRow.padEnd(14," ") + dayName;
-  topRow = topRow.substring(0,16);
+  const topRow = hh+":"+mm+":"+ss+" "+period+" "+dayName;
 
-  // ===== BOTTOM ROW =====
-  let bottomRow = "--:--".padEnd(16," ");
+  let bottomRow="--:--";
 
   if(alarmSet){
 
@@ -265,11 +262,17 @@ function updateClock(){
       String(alarmMinute).padStart(2,"0")+" "+
       alarmPeriod;
 
-    bottomRow = bottomRow.padEnd(15," ") + "B";
-    bottomRow = bottomRow.substring(0,16);
+    bottomRow = bottomRow.padEnd(15," ")+"B";
   }
 
   setLCD(topRow,bottomRow);
+
+  if(alarmSet &&
+     hour24==alarmHour &&
+     minute==alarmMinute &&
+     second==0){
+       ringing=true;
+  }
 }
 
 setInterval(updateClock,1000);
@@ -281,15 +284,15 @@ function setAlarm(){
   if(!input) return;
 
   const parts=input.split(":");
+
   alarmHour=parseInt(parts[0]);
   alarmMinute=parseInt(parts[1]);
   alarmSet=true;
 }
 
 function stopAlarm(){
-  alarmSet=false;
+  ringing=false;
 }
-
 
 </script>
 </body>
