@@ -427,8 +427,10 @@
   }
 
   .time-box{
-    min-width:70px;
+    min-width:50px;
     padding:10px 8px 6px;
+    padding-top: 20px;
+    padding-bottom: 20px;
     border-radius:18px;
     background:#ffffff;
     border:2px solid #000000;
@@ -438,7 +440,7 @@
   }
 
   .time-number{
-    font-size:30px;
+    font-size:40px;
   }
 
   .time-box-input{
@@ -468,13 +470,17 @@
 
   .time-colon{
     font-size:26px;
-    margin-bottom:2px;
     color:var(--text-muted);
+    align-self:center;
+    margin:0 6px;
+    margin-bottom: 20px;
+    
   }
 
   .ampm-toggle{
     display:flex;
     flex-direction:column;
+    margin-bottom: 20px;
     gap:6px;
   }
 
@@ -499,12 +505,7 @@
   }
 
   .time-input-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:4px;
-    font-size:11px;
-    color:var(--text-muted);
+    display:none;
   }
 
   .time-picker-actions{
@@ -537,6 +538,21 @@
   }
 
   /* Details "third screen" */
+  .details-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.25);
+    opacity:0;
+    pointer-events:none;
+    z-index:19;
+    transition:opacity 0.24s ease-out;
+  }
+
+  .details-overlay.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+
   .details-sheet{
     position:fixed;
     left:0;
@@ -813,7 +829,7 @@
 
     .alarm-card,
     .new-alarm-card{
-      padding:12px 12px 14px;
+      padding:px 12px 14px;
     }
 
     .details-sheet{
@@ -1027,6 +1043,7 @@
     </div>
   </div>
 
+  <div class="details-overlay" id="details-overlay"></div>
   <div class="details-sheet" id="details-sheet">
     <div class="details-grabber"></div>
     <div class="details-header">
@@ -1126,9 +1143,12 @@ const DOT_SPACING_Y = 0.7;
 
 const pixelGroup = document.getElementById("pixels");
 
-let alarms = []; // { id, hour, minute, enabled, name, scheduledDate }
+let alarms = [];
 let ringing = false;
 let ringStart = 0;
+let ringingAlarmId = null;
+let blinkState = true;
+let scrollOffset = 0;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
@@ -1136,6 +1156,7 @@ const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
 const font = {
 
+/* NUMBERS */
 "0":["01110","10001","10011","10101","11001","10001","01110","00000"],
 "1":["00100","01100","00100","00100","00100","00100","01110","00000"],
 "2":["01110","10001","00001","00010","00100","01000","11111","00000"],
@@ -1146,30 +1167,39 @@ const font = {
 "7":["11111","00001","00010","00100","01000","01000","01000","00000"],
 "8":["01110","10001","10001","01110","10001","10001","01110","00000"],
 "9":["01110","10001","10001","01111","00001","00010","11100","00000"],
+
 ":":["00000","00100","00100","00000","00100","00100","00000","00000"],
 
+" ":["00000","00000","00000","00000","00000","00000","00000","00000"],
+
+/* ALPHABETS */
 "A":["01110","10001","10001","11111","10001","10001","10001","00000"],
-"P":["11110","10001","10001","11110","10000","10000","10000","00000"],
-"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
-"S":["01111","10000","10000","01110","00001","00001","11110","00000"],
-"U":["10001","10001","10001","10001","10001","10001","01110","00000"],
-"T":["11111","00100","00100","00100","00100","00100","00100","00000"],
-"W":["10001","10001","10001","10101","10101","11011","10001","00000"],
-"H":["10001","10001","10001","11111","10001","10001","10001","00000"],
-"F":["11111","10000","10000","11110","10000","10000","10000","00000"],
-"E":["11111","10000","10000","11110","10000","10000","11111","00000"],
+"B":["11110","10001","10001","11110","10001","10001","11110","00000"],
+"C":["01110","10001","10000","10000","10000","10001","01110","00000"],
 "D":["11110","10001","10001","10001","10001","10001","11110","00000"],
-"O":["01110","10001","10001","10001","10001","10001","01110","00000"],
-"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
-
-"I":["11111","00100","00100","00100","00100","00100","11111","00000"],
-
-"N":["10001","11001","10101","10011","10001","10001","10001","00000"],
-
+"E":["11111","10000","10000","11110","10000","10000","11111","00000"],
+"F":["11111","10000","10000","11110","10000","10000","10000","00000"],
 "G":["01110","10001","10000","10111","10001","10001","01110","00000"],
-
-/* Bell glyph */
-"B":[
+"H":["10001","10001","10001","11111","10001","10001","10001","00000"],
+"I":["11111","00100","00100","00100","00100","00100","11111","00000"],
+"J":["00111","00010","00010","00010","00010","10010","01100","00000"],
+"K":["10001","10010","10100","11000","10100","10010","10001","00000"],
+"L":["10000","10000","10000","10000","10000","10000","11111","00000"],
+"M":["10001","11011","10101","10101","10001","10001","10001","00000"],
+"N":["10001","11001","10101","10011","10001","10001","10001","00000"],
+"O":["01110","10001","10001","10001","10001","10001","01110","00000"],
+"P":["11110","10001","10001","11110","10000","10000","10000","00000"],
+"Q":["01110","10001","10001","10001","10101","10010","01101","00000"],
+"R":["11110","10001","10001","11110","10100","10010","10001","00000"],
+"S":["01111","10000","10000","01110","00001","00001","11110","00000"],
+"T":["11111","00100","00100","00100","00100","00100","00100","00000"],
+"U":["10001","10001","10001","10001","10001","10001","01110","00000"],
+"V":["10001","10001","10001","10001","10001","01010","00100","00000"],
+"W":["10001","10001","10001","10101","10101","11011","10001","00000"],
+"X":["10001","10001","01010","00100","01010","10001","10001","00000"],
+"Y":["10001","10001","01010","00100","00100","00100","00100","00000"],
+"Z":["11111","00001","00010","00100","01000","10000","11111","00000"],
+"~":[
 "00000",
 "00100",
 "01110",
@@ -1178,9 +1208,7 @@ const font = {
 "11111",
 "00100",
 "00000"
-],
-
-" ":["00000","00000","00000","00000","00000","00000","00000","00000"]
+]
 
 };
 
@@ -1192,21 +1220,16 @@ function clearDisplay(){
 
 function drawChar(char,col,row){
   const pattern = font[char] || font[" "];
-
   for(let y=0;y<8;y++){
     for(let x=0;x<5;x++){
       if(pattern[y][x]==="1"){
         const px = col*CELL_W + x*DOT_SPACING_X;
         const py = row*CELL_H + y*DOT_SPACING_Y;
-
-        const rect=document.createElementNS(
-          "http://www.w3.org/2000/svg","rect");
-
+        const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
         rect.setAttribute("x",px);
         rect.setAttribute("y",py);
         rect.setAttribute("width",DOT_W);
         rect.setAttribute("height",DOT_H);
-
         pixelGroup.appendChild(rect);
       }
     }
@@ -1227,10 +1250,16 @@ function setLCD(l1,l2){
 
 /* ================= CLOCK ================= */
 
+function toISODateLocal(dt){
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,"0");
+  const d = String(dt.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
 function updateClock(){
 
   const now = new Date();
-
   let hour24 = now.getHours();
   const minute = now.getMinutes();
   const second = now.getSeconds();
@@ -1247,70 +1276,113 @@ function updateClock(){
   const ss = String(second).padStart(2,"0");
 
   const dayName = days[now.getDay()];
-
   const topRow =
     (hh+":"+mm+":"+ss+" "+period)
     .padEnd(13," ")
     + " "+dayName;
 
-  let bottomRow="--:--";
-  let nextAlarm = null;
-  let nextAlarmDiffMins = null;
+  /* ===== RINGING MODE ===== */
 
-  if(ringing){
+  /* ===== RINGING MODE ===== */
 
-    bottomRow = "  RINGING !!!  ";
+if (ringing) {
 
-    if(Date.now() - ringStart >= 5000){
-      ringing = false;
+const alarm = alarms.find(a => a.id === ringingAlarmId);
+
+if (Date.now() - ringStart >= 10000) {
+  ringing = false;
+  ringingAlarmId = null;
+  scrollOffset = 0;
+  return;
+}
+
+// Smooth blink
+blinkState = !blinkState;
+
+// Replace day with blinking bell
+let topLeft = hh + ":" + mm + ":" + ss + " " + period;
+
+let bellIcon = blinkState ? "~" : " ";
+
+let displayTime =
+  topLeft.padEnd(15," ") + bellIcon;
+
+// Smooth scroll speed control
+let noteText = (alarm?.name || "ALARM").toUpperCase();
+let bottomRow;
+
+if (noteText.length <= 16) {
+  bottomRow = noteText.padEnd(16," ");
+} else {
+  const padded = "   " + noteText + "   ";
+  const start = scrollOffset % padded.length;
+  bottomRow = (padded + padded).substring(start, start + 16);
+
+  scrollOffset += 0.5;   // slower smooth scroll
+}
+
+setLCD(displayTime, bottomRow);
+return;
+}
+  /* ===== NORMAL MODE ===== */
+
+  let nextAlarm=null;
+  let bestDiff=Infinity;
+  const nowMins = hour24*60 + minute;
+
+  for(const a of alarms){
+
+    if(!a.enabled) continue;
+
+    if(a.scheduledDate){
+      if(a.scheduledDate !== toISODateLocal(now)) continue;
     }
 
+    const alarmMins = a.hour*60 + a.minute;
+    const diff = (alarmMins - nowMins + 1440) % 1440;
+
+    if(diff < bestDiff){
+      bestDiff=diff;
+      nextAlarm=a;
+    }
   }
-  else{
-    const enabled = alarms.filter(a => a && a.enabled && Number.isFinite(a.hour) && Number.isFinite(a.minute));
-    if(enabled.length){
-      const nowMins = hour24 * 60 + minute;
-      let best = null;
-      let bestDiff = Infinity;
-      for(const a of enabled){
-        const alarmMins = a.hour * 60 + a.minute;
-        const diff = (alarmMins - nowMins + 1440) % 1440;
-        if(diff < bestDiff){
-          bestDiff = diff;
-          best = a;
-        }
-      }
-      nextAlarm = best;
-      nextAlarmDiffMins = bestDiff;
 
-      let alarmDisplay = nextAlarm.hour;
-      let alarmPeriod = "AM";
-      if(nextAlarm.hour >= 12) alarmPeriod = "PM";
-      if(nextAlarm.hour === 0) alarmDisplay = 12;
-      else if(nextAlarm.hour > 12) alarmDisplay -= 12;
+  let bottomRow="--:--";
 
-      bottomRow =
-        String(alarmDisplay).padStart(2,"0")+":"+
-        String(nextAlarm.minute).padStart(2,"0")+" "+
-        alarmPeriod;
+  if(nextAlarm){
 
-      bottomRow = bottomRow.padEnd(15," ")+"B";
-    }
+    let ah = nextAlarm.hour;
+    let ap="AM";
+
+    if(ah>=12) ap="PM";
+    if(ah===0) ah=12;
+    else if(ah>12) ah-=12;
+
+    bottomRow =
+      String(ah).padStart(2,"0")+":"+
+      String(nextAlarm.minute).padStart(2,"0")+" "+
+      ap;
+
+     bottomRow = bottomRow.padEnd(15," ") + "~";
   }
 
   setLCD(topRow,bottomRow);
 
-  if(!ringing &&
-     nextAlarm &&
-     nextAlarmDiffMins === 0 &&
-     second === 0){
+  /* ===== TRIGGER CHECK ===== */
 
-     ringing = true;
-     ringStart = Date.now();
+  if(nextAlarm && bestDiff===0 && second===0){
+
+    ringing=true;
+    ringStart=Date.now();
+    ringingAlarmId=nextAlarm.id;
+
+    if(nextAlarm.scheduledDate === toISODateLocal(now)){
+      nextAlarm.scheduledDate=null;
+    }
   }
 }
 
-setInterval(updateClock,1000);
+setInterval(updateClock,200);
 
 /* ================= SET ALARM & UI ================= */
 
@@ -1327,6 +1399,7 @@ const alarmList = document.getElementById("alarm-list");
 const alarmCardTemplate = document.getElementById("alarm-card-template");
 
 const detailsSheet = document.getElementById("details-sheet");
+const detailsOverlay = document.getElementById("details-overlay");
 const detailsSubtitle = document.getElementById("details-subtitle");
 const detailsTime = document.getElementById("details-time");
 const newAlarmCard = document.getElementById("new-alarm-card");
@@ -1359,7 +1432,8 @@ if(detailsTime){
   detailsTime.style.cursor = "pointer";
   detailsTime.addEventListener("click",function(){
     if(!activeAlarmId) return;
-    detailsSheet.classList.remove("open");
+    if(detailsSheet) detailsSheet.classList.remove("open");
+    if(detailsOverlay) detailsOverlay.classList.remove("open");
     openTimePickerForEdit(activeAlarmId);
   });
 }
@@ -1606,7 +1680,8 @@ function refreshDetails(){
   if(!activeAlarmId) return;
   const alarm = getAlarmById(activeAlarmId);
   if(!alarm){
-    detailsSheet.classList.remove("open");
+    if(detailsSheet) detailsSheet.classList.remove("open");
+    if(detailsOverlay) detailsOverlay.classList.remove("open");
     activeAlarmId = null;
     return;
   }
@@ -1624,7 +1699,8 @@ function refreshDetails(){
 function openDetails(alarmId){
   activeAlarmId = alarmId;
   refreshDetails();
-  detailsSheet.classList.add("open");
+  if(detailsSheet) detailsSheet.classList.add("open");
+  if(detailsOverlay) detailsOverlay.classList.add("open");
 }
 
 function openTimePickerForNew(){
@@ -1889,7 +1965,8 @@ updateScheduleButton();
 
 detailsEdit.addEventListener("click",function(){
   if(!activeAlarmId) return;
-  detailsSheet.classList.remove("open");
+  if(detailsSheet) detailsSheet.classList.remove("open");
+  if(detailsOverlay) detailsOverlay.classList.remove("open");
   openTimePickerForEdit(activeAlarmId);
 });
 
@@ -1898,7 +1975,8 @@ detailsDelete.addEventListener("click",function(){
   alarms = alarms.filter(a => a.id !== activeAlarmId);
   persistAlarms();
   renderAlarms();
-  detailsSheet.classList.remove("open");
+  if(detailsSheet) detailsSheet.classList.remove("open");
+  if(detailsOverlay) detailsOverlay.classList.remove("open");
   activeAlarmId = null;
 });
 
@@ -1912,8 +1990,16 @@ detailsSave.addEventListener("click",function(){
       refreshDetails();
     }
   }
-  detailsSheet.classList.remove("open");
+  if(detailsSheet) detailsSheet.classList.remove("open");
+  if(detailsOverlay) detailsOverlay.classList.remove("open");
 });
+
+if(detailsOverlay){
+  detailsOverlay.addEventListener("click",function(){
+    if(detailsSheet) detailsSheet.classList.remove("open");
+    detailsOverlay.classList.remove("open");
+  });
+}
 
 refreshPickerDisplays();
 loadAlarms();
