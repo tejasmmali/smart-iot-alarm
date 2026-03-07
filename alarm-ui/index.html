@@ -1149,6 +1149,11 @@ let ringStart = 0;
 let ringingAlarmId = null;
 let blinkState = true;
 let scrollOffset = 0;
+let notificationActive = false;
+let notificationText = "";
+let notificationUser = "";
+let notificationStart = 0;
+let lastNotificationId = null;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
@@ -1280,6 +1285,31 @@ function updateClock(){
     (hh+":"+mm+":"+ss+" "+period)
     .padEnd(13," ")
     + " "+dayName;
+
+    /* ===== SLACK NOTIFICATION ===== */
+
+if(notificationActive){
+
+  if(Date.now() - notificationStart > 5000){
+    notificationActive = false;
+    return;
+  }
+
+  let topRow = "SLACK MESSAGE".padEnd(16," ");
+
+  let msg = notificationText;
+  if(msg.length > 16){
+    const padded = "   " + msg + "   ";
+    const start = Math.floor(scrollOffset) % padded.length;
+    msg = (padded + padded).substring(start,start+16);
+    scrollOffset += 0.5;
+  }else{
+    msg = msg.padEnd(16," ");
+  }
+
+  setLCD(topRow,msg);
+  return;
+}
 
   /* ===== RINGING MODE ===== */
 
@@ -2004,7 +2034,48 @@ if(detailsOverlay){
 refreshPickerDisplays();
 loadAlarms();
 renderAlarms();
-fetchAlarmsOnce();
+
+function listenSlackNotifications(){
+
+  const url = "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/slack_messages.json";
+
+  setInterval(async ()=>{
+
+    if(notificationActive) return;
+
+    try{
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if(!data) return;
+
+      const keys = Object.keys(data);
+      const latestKey = keys[keys.length - 1];
+
+      // ignore if already shown
+      if(latestKey === lastNotificationId) return;
+
+      const last = data[latestKey];
+      if(!last || !last.text) return;
+
+      lastNotificationId = latestKey;
+
+      notificationText = String(last.text).toUpperCase();
+      notificationUser = String(last.user || "SLACK");
+
+      notificationActive = true;
+      notificationStart = Date.now();
+
+    }catch(e){
+      console.error(e);
+    }
+
+  },3000);
+
+}
+
+listenSlackNotifications();
 
 
 </script>
