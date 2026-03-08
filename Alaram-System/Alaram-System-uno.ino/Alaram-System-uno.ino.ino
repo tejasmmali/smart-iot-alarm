@@ -5,17 +5,17 @@
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 SoftwareSerial espSerial(10, 11);
 
-/* ================= STATUS ================= */
+/*status */
 
 bool timeSynced = false;
 bool alarmSynced = false;
 
-/* ================= TIME ================= */
+/* time */
 
 String currentTime = "00:00:00";
 int currentDay = 0;
 
-/* ================= ALARM ================= */
+/*alarm*/
 
 int alarmHour = 0;
 int alarmMinute = 0;
@@ -26,8 +26,9 @@ String alarmNote = "ALARM";
 bool ringing = false;
 unsigned long ringStart = 0;
 bool alarmTriggeredThisMinute = false;
+unsigned long ringDurationMs = 10000;
 
-/* ================= SLACK ================= */
+/*slack*/
 
 bool slackNotify = false;
 unsigned long slackStart = 0;
@@ -48,12 +49,12 @@ unsigned long lastBlink = 0;
 unsigned long lastScroll = 0;
 int scrollIndex = 0;
 
-/* ===== Buzzer ===== */
+/*buzzer*/
 
 bool beepState = false;
 unsigned long lastBeep = 0;
 
-/* ================= CONNECTING ================= */
+
 
 unsigned long lastLoadUpdate = 0;
 int loadProgress = 0;
@@ -77,7 +78,7 @@ byte bell[8] = {
 
 String serialBuffer = "";
 
-/* ================================================= */
+
 
 void setup() {
 
@@ -91,11 +92,11 @@ void setup() {
   pinMode(buzzerPin, OUTPUT);
 }
 
-/* ================================================= */
+
 
 void loop() {
 
-  /* ===== READ SERIAL FROM ESP ===== */
+
 
   while (espSerial.available()) {
     char c = espSerial.read();
@@ -109,7 +110,7 @@ void loop() {
     }
   }
 
-  /* ===== CONNECTING SCREEN ===== */
+  /*connecting animation*/
 
   if (!(timeSynced && alarmSynced)) {
 
@@ -133,11 +134,11 @@ void loop() {
     return;
   }
 
-  /* ================= SLACK DISPLAY ================= */
+  /* slack msg animation */
 
   if (slackNotify) {
 
-    if (millis() - slackStart >= 5000) {
+    if (millis() - slackStart >= 8000) {
       slackNotify = false;
       lastLine1 = "";
       lastLine2 = "";
@@ -169,7 +170,7 @@ void loop() {
     return;
   }
 
-  /* ===== PARSE TIME ===== */
+
 
   int hour24 = currentTime.substring(0,2).toInt();
   int minute = currentTime.substring(3,5).toInt();
@@ -182,7 +183,7 @@ void loop() {
   if (hour24 == 0) displayHour = 12;
   else if (hour24 > 12) displayHour -= 12;
 
-  /* ================= RINGING MODE ================= */
+  /* ring mode */
 
   if (ringing) {
 
@@ -231,7 +232,7 @@ void loop() {
       digitalWrite(buzzerPin,beepState);
     }
 
-    if (millis() - ringStart >= 10000) {
+    if (millis() - ringStart >= ringDurationMs) {
       digitalWrite(buzzerPin,LOW);
       ringing = false;
       scrollIndex = 0;
@@ -240,7 +241,7 @@ void loop() {
     return;
   }
 
-  /* ================= NORMAL MODE ================= */
+  /* normal mode*/
 
   char buffer[17];
 
@@ -283,7 +284,7 @@ void loop() {
 
   updateLCD(line1,line2);
 
-  /* ===== SAFE MINUTE TRIGGER ===== */
+  /* safe min trigger */
 
   if (alarmSet && !ringing) {
 
@@ -302,7 +303,7 @@ void loop() {
   }
 }
 
-/* ================================================= */
+
 
 void updateLCD(String l1,String l2) {
 
@@ -322,7 +323,7 @@ void updateLCD(String l1,String l2) {
   }
 }
 
-/* ================================================= */
+
 
 void processLine(String input) {
 
@@ -338,7 +339,14 @@ void processLine(String input) {
     timeSynced = true;
   }
 
-  if (input.startsWith("A")) {
+  if (input == "ACLEAR") {
+
+    alarmSet = false;
+    alarmSynced = true;
+    ringing = false;
+    digitalWrite(buzzerPin,LOW);
+  }
+  else if (input.startsWith("A")) {
 
     alarmHour = input.substring(1,3).toInt();
     alarmMinute = input.substring(4,6).toInt();
@@ -349,6 +357,13 @@ void processLine(String input) {
 
   if (input.startsWith("N")) {
     alarmNote = input.substring(1);
+  }
+
+  if (input.startsWith("D")) {
+    int sec = input.substring(1).toInt();
+    if (sec < 5) sec = 5;
+    if (sec > 20) sec = 20;
+    ringDurationMs = (unsigned long)sec * 1000UL;
   }
 
   if (input.startsWith("S")) {

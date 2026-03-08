@@ -3,17 +3,15 @@
 #include <ArduinoJson.h>
 #include "time.h"
 
-/* ================= WIFI ================= */
 
 const char* ssid = "BAPPA 3";
 const char* password = "tej@$m@li7122007@@$";
 
-/* ================= FIREBASE ================= */
+
 
 const char* firebaseURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json";
 
-/* ================= SLACK ================= */
 
 const char* slackURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/slack_messages.json";
@@ -21,20 +19,18 @@ const char* slackURL =
 String lastSlackID = "";
 unsigned long lastSlackFetch = 0;
 
-/* ================= NTP ================= */
 
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 19800;
 const int daylightOffset_sec = 0;
 
-/* ================= SERIAL ================= */
 
-HardwareSerial mySerial(2);   // TX2 = 17, RX2 = 16
+HardwareSerial mySerial(2);   
 
 unsigned long lastTimeSend = 0;
 unsigned long lastAlarmFetch = 0;
 
-/* ================================================= */
+
 
 void setup() {
 
@@ -55,7 +51,6 @@ void setup() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
-/* ================================================= */
 
 void loop() {
 
@@ -77,15 +72,15 @@ void loop() {
 
   /* ===== FETCH SLACK MESSAGE ===== */
 
-  if (now - lastSlackFetch >= 5000) {
+  if (now - lastSlackFetch >= 8000) {
     lastSlackFetch = now;
     fetchSlackMessage();
   }
 }
 
-/* ================================================= */
+
 /* ================= SEND TIME ===================== */
-/* ================================================= */
+
 
 void sendTimeToUNO() {
 
@@ -104,9 +99,9 @@ void sendTimeToUNO() {
   mySerial.println(timeinfo.tm_wday);
 }
 
-/* ================================================= */
+
 /* ================= FETCH ALARM =================== */
-/* ================================================= */
+
 
 void fetchAlarmFromFirebase() {
 
@@ -136,44 +131,87 @@ void fetchAlarmFromFirebase() {
 
   JsonArray alarms = doc.as<JsonArray>();
 
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to get time for alarm selection");
+    http.end();
+    return;
+  }
+
+  int nowMinutes = timeinfo.tm_hour * 60 + timeinfo.tm_min;
+
+  JsonObject bestAlarm;
+  int bestDiff = 1441;
+  bool found = false;
+
   for (JsonObject alarm : alarms) {
 
-    bool enabled = alarm["enabled"];
+    bool enabled = alarm["enabled"] | false;
+    if (!enabled) continue;
 
-    if (enabled) {
+    int hour = alarm["hour"] | -1;
+    int minute = alarm["minute"] | -1;
+    if (hour < 0 || minute < 0) continue;
 
-      int hour = alarm["hour"];
-      int minute = alarm["minute"];
-      String name = alarm["name"] | "ALARM";
+    int alarmMinutes = hour * 60 + minute;
+    int diff = (alarmMinutes - nowMinutes + 1440) % 1440;
 
-      /* ===== SEND ALARM TIME ===== */
-
-      mySerial.print("A");
-
-      if (hour < 10) mySerial.print("0");
-      mySerial.print(hour);
-      mySerial.print(":");
-
-      if (minute < 10) mySerial.print("0");
-      mySerial.println(minute);
-
-      /* ===== SEND ALARM NOTE ===== */
-
-      mySerial.print("N");
-      mySerial.println(name);
-
-      Serial.println("Alarm Sent to UNO");
-
-      break;
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestAlarm = alarm;
+      found = true;
     }
+  }
+
+  if (found) {
+    int hour = bestAlarm["hour"];
+    int minute = bestAlarm["minute"];
+    String name = bestAlarm["name"] | "ALARM";
+    int durationSec = bestAlarm["durationSec"] | 10;
+    if (durationSec < 5) durationSec = 5;
+    if (durationSec > 20) durationSec = 20;
+
+    /* ===== SEND ALARM TIME ===== */
+
+    mySerial.print("A");
+
+    if (hour < 10) mySerial.print("0");
+    mySerial.print(hour);
+    mySerial.print(":");
+
+    if (minute < 10) mySerial.print("0");
+    mySerial.println(minute);
+
+    /* ===== SEND ALARM NOTE ===== */
+
+    mySerial.print("N");
+    mySerial.println(name);
+
+    /* ===== SEND DURATION (seconds) ===== */
+
+    mySerial.print("D");
+    if (durationSec < 10) mySerial.print("0");
+    mySerial.println(durationSec);
+
+    Serial.print("Alarm Sent to UNO: ");
+    Serial.print(hour);
+    Serial.print(":");
+    Serial.print(minute);
+    Serial.print(" for ");
+    Serial.print(durationSec);
+    Serial.println("s");
+  } else {
+  
+    mySerial.println("ACLEAR");
+    Serial.println("No enabled alarms; sent ACLEAR");
   }
 
   http.end();
 }
 
-/* ================================================= */
+
 /* ================= FETCH SLACK =================== */
-/* ================================================= */
+
 
 void fetchSlackMessage() {
 

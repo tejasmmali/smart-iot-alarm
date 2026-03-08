@@ -6,9 +6,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Doto:wght@800&display=swap" rel="stylesheet">
-<!-- Material Icons -->
+
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<!-- Font Awesome -->
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <title>Smart IoT Alarm</title>
 <style>
@@ -85,6 +85,13 @@
     font-size:28px;
     font-weight:700;
     letter-spacing:0.02em;
+  }
+
+  .header-logo{
+    height:80px;
+    width:auto;
+    object-fit:contain;
+    display:block;
   }
 
   .kebab{
@@ -253,8 +260,7 @@
   .nav-item.active .nav-icon{
     background:#271918;
   }
-
-  /* Time picker "second screen" */
+  /* time picking overlay */
   .time-picker-overlay{
     position:fixed;
     inset:0;
@@ -266,7 +272,7 @@
     z-index:40;
   }
 
-  /* Date picker overlay */
+  /* date picking overlay */
   .date-picker-overlay{
     position:fixed;
     inset:0;
@@ -537,7 +543,7 @@
     height:0;
   }
 
-  /* Details "third screen" */
+  /* details overlay */
   .details-overlay{
     position:fixed;
     inset:0;
@@ -675,6 +681,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    min-height:52px;
     padding:10px 0;
     font-size:13px;
     background-color: #ebebeb98;
@@ -711,6 +718,81 @@
 
   .setting-value{
     font-weight:600;
+  }
+
+  /* duration slider */
+  .duration-slider-wrap{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    max-width:200px;
+    width:100%;
+    justify-content:flex-end;
+    flex:1;
+    min-width:0;
+  }
+  .duration-value-pill{
+    min-width:56px;
+    padding:6px 12px 5px;
+    border-radius:999px;
+    background:#ffffff;
+ 
+ font-family: "Doto",system-ui,monospace ;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:0.02em;
+    text-align:center;
+    color:#000000;
+    line-height:1.2;
+    transition:box-shadow 0.1s ease, transform 0.1s ease;
+  }
+  .duration-value-pill:focus{
+    outline:none;
+  }
+  .duration-slider-track{
+    flex:1;
+    min-width:80px;
+    height:8px;
+    -webkit-appearance:none;
+    appearance:none;
+    background:#ffffff;
+    border:2px solid #000000;
+    border-radius:999px;
+    outline:none;
+  }
+  .duration-slider-track::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#ffffff;
+    border:2px solid #000000;
+    box-shadow:0 2px 0 rgba(0,0,0,0.7);
+    cursor:pointer;
+    transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .duration-slider-track::-webkit-slider-thumb:hover{
+    transform:scale(1.08);
+  }
+  .duration-slider-track::-moz-range-thumb{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#ffffff;
+    border:2px solid #000000;
+    box-shadow:0 2px 0 rgba(0,0,0,0.7);
+    cursor:pointer;
+    transition:transform 0.12s ease;
+  }
+  .duration-slider-track::-moz-range-thumb:hover{
+    transform:scale(1.08);
+  }
+  .duration-slider-track::-moz-range-track{
+    height:8px;
+    border:2px solid #000000;
+    border-radius:999px;
+    background:#ffffff;
   }
 
   .setting-toggle{
@@ -796,7 +878,7 @@
     margin-left:6px;
   }
 
-  /* ======== Mobile layout tweaks ======== */
+ /* mobile css */
   @media (max-width: 600px){
     body{
       padding:16px 10px 24px;
@@ -875,11 +957,11 @@
 
   <div class="screen">
     <div class="screen-header">
-      <div class="screen-title">Alarms</div>
+      <img src="/images/flag-orpheus-left-bw.svg" alt="Logo" class="header-logo">
       <div class="kebab">⋮</div>
     </div>
 
-    <div class="lcd-label">SMART IOT CLOCK</div>
+    <div class="lcd-label">SMART Alarm CLOCK</div>
     <div class="lcd-wrap">
       <svg id="lcd" width="80mm" height="36mm" viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg">
 
@@ -1081,6 +1163,24 @@
       </div>
       <div class="setting-card">
         <div class="setting-left">
+          <div class="setting-icon"><i class="fa-solid fa-stopwatch"></i></div>
+          <div class="setting-label">Alarm duration</div>
+        </div>
+        <div class="duration-slider-wrap">
+          <span id="details-duration-label" class="duration-value-pill">10 sec</span>
+          <input
+            id="details-duration-slider"
+            class="duration-slider-track"
+            type="range"
+            min="5"
+            max="20"
+            value="10"
+            step="1"
+          >
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-left">
           <div class="setting-icon"><i class="fa-solid fa-bell"></i></div>
           <div class="setting-label">Sound</div>
         </div>
@@ -1131,7 +1231,7 @@
 <script>
 
 
-/* ================= LCD CONFIG ================= */
+/*lcd configuration*/
 
 const COLS = 16;
 const CELL_W = 3.55;
@@ -1157,11 +1257,11 @@ let lastNotificationId = null;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
-/* ================= FONT ================= */
+/*lcd font*/
 
 const font = {
 
-/* NUMBERS */
+/*number*/
 "0":["01110","10001","10011","10101","11001","10001","01110","00000"],
 "1":["00100","01100","00100","00100","00100","00100","01110","00000"],
 "2":["01110","10001","00001","00010","00100","01000","11111","00000"],
@@ -1177,7 +1277,7 @@ const font = {
 
 " ":["00000","00000","00000","00000","00000","00000","00000","00000"],
 
-/* ALPHABETS */
+/*abhabet characters*/
 "A":["01110","10001","10001","11111","10001","10001","10001","00000"],
 "B":["11110","10001","10001","11110","10001","10001","11110","00000"],
 "C":["01110","10001","10000","10000","10000","10001","01110","00000"],
@@ -1217,7 +1317,7 @@ const font = {
 
 };
 
-/* ================= LCD DRAW ================= */
+/*lcd drawing */
 
 function clearDisplay(){
   pixelGroup.innerHTML="";
@@ -1253,7 +1353,7 @@ function setLCD(l1,l2){
   print(l2.padEnd(16," "),1);
 }
 
-/* ================= CLOCK ================= */
+/*clock screen*/
 
 function toISODateLocal(dt){
   const y = dt.getFullYear();
@@ -1286,11 +1386,11 @@ function updateClock(){
     .padEnd(13," ")
     + " "+dayName;
 
-    /* ===== SLACK NOTIFICATION ===== */
+    /*slack notification*/
 
 if(notificationActive){
 
-  if(Date.now() - notificationStart > 5000){
+  if(Date.now() - notificationStart > 8000){
     notificationActive = false;
     return;
   }
@@ -1311,9 +1411,7 @@ if(notificationActive){
   return;
 }
 
-  /* ===== RINGING MODE ===== */
-
-  /* ===== RINGING MODE ===== */
+  /*ring mode*/
 
 if (ringing) {
 
@@ -1326,10 +1424,10 @@ if (Date.now() - ringStart >= 10000) {
   return;
 }
 
-// Smooth blink
+
 blinkState = !blinkState;
 
-// Replace day with blinking bell
+
 let topLeft = hh + ":" + mm + ":" + ss + " " + period;
 
 let bellIcon = blinkState ? "~" : " ";
@@ -1337,7 +1435,7 @@ let bellIcon = blinkState ? "~" : " ";
 let displayTime =
   topLeft.padEnd(15," ") + bellIcon;
 
-// Smooth scroll speed control
+
 let noteText = (alarm?.name || "ALARM").toUpperCase();
 let bottomRow;
 
@@ -1348,13 +1446,13 @@ if (noteText.length <= 16) {
   const start = scrollOffset % padded.length;
   bottomRow = (padded + padded).substring(start, start + 16);
 
-  scrollOffset += 0.5;   // slower smooth scroll
+  scrollOffset += 0.5; 
 }
 
 setLCD(displayTime, bottomRow);
 return;
 }
-  /* ===== NORMAL MODE ===== */
+  /*normal screen mode*/
 
   let nextAlarm=null;
   let bestDiff=Infinity;
@@ -1398,7 +1496,7 @@ return;
 
   setLCD(topRow,bottomRow);
 
-  /* ===== TRIGGER CHECK ===== */
+  /*trigger check*/
 
   if(nextAlarm && bestDiff===0 && second===0){
 
@@ -1414,7 +1512,7 @@ return;
 
 setInterval(updateClock,200);
 
-/* ================= SET ALARM & UI ================= */
+/* set alarm /ui*/
 
 const fabBtn = document.getElementById("fab-btn");
 const timePickerOverlay = document.getElementById("time-picker-overlay");
@@ -1438,6 +1536,8 @@ const detailsDelete = document.getElementById("details-delete");
 const detailsSave = document.getElementById("details-save");
 const dayChips = document.querySelectorAll(".day-chip");
 const detailsNameInput = document.getElementById("details-name-input");
+const detailsDurationSlider = document.getElementById("details-duration-slider");
+const detailsDurationLabel = document.getElementById("details-duration-label");
 const scheduleAlarmBtn = document.getElementById("schedule-alarm-btn");
 const scheduleAlarmIcon = document.getElementById("schedule-alarm-icon");
 const scheduleAlarmText = document.getElementById("schedule-alarm-text");
@@ -1536,6 +1636,12 @@ function normalizeAlarm(a){
   a.enabled = !!a.enabled;
   a.name = typeof a.name === "string" ? a.name : "Alarm";
   a.scheduledDate = typeof a.scheduledDate === "string" ? a.scheduledDate : null; // YYYY-MM-DD
+  const rawDur = Number(a.durationSec);
+  if(Number.isFinite(rawDur)){
+    a.durationSec = Math.min(20,Math.max(5,Math.round(rawDur)));
+  }else{
+    a.durationSec = 10;
+  }
   return a;
 }
 
@@ -1605,7 +1711,7 @@ async function syncLegacyNextAlarmToFirebase(){
       }
     );
   }catch(e){
-    // ignore
+    
   }
 }
 
@@ -1613,7 +1719,7 @@ function persistAlarms(){
   try{
     localStorage.setItem("alarms",JSON.stringify(alarms));
   }catch(e){
-    // ignore
+    
   }
   syncAlarmsToFirebase();
   syncLegacyNextAlarmToFirebase();
@@ -1630,7 +1736,7 @@ async function fetchAlarmsOnce(){
       persistAlarms();
       renderAlarms();
     }else{
-      // backwards compatibility: old single-alarm schema at /alarm.json
+      // backwards compatibility = old single-alarm schema at alarm.json
       try{
         const resLegacy = await fetch(
           "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarm.json"
@@ -1648,16 +1754,16 @@ async function fetchAlarmsOnce(){
           renderAlarms();
         }
       }catch(e2){
-        // ignore
+      
       }
     }
   }catch(e){
-    // ignore
+    
   }
 }
 
 let activeAlarmId = null;
-let timePickerTargetId = null; // null => create
+let timePickerTargetId = null; // null = create
 
 function getAlarmById(id){
   return alarms.find(a => a.id === id) || null;
@@ -1719,6 +1825,12 @@ function refreshDetails(){
   const t = formatTime(alarm.hour,alarm.minute);
   if(detailsTime) detailsTime.textContent = t.hh + ":" + t.mm + " " + t.period.toUpperCase();
   if(detailsNameInput) detailsNameInput.value = alarm.name || "Alarm";
+
+  if(detailsDurationSlider && detailsDurationLabel){
+    const dur = Number.isFinite(alarm.durationSec) ? alarm.durationSec : 10;
+    detailsDurationSlider.value = dur;
+    detailsDurationLabel.textContent = dur + " sec";
+  }
 
   const onOff = document.getElementById("details-onoff-text");
   if(onOff) onOff.textContent = alarm.enabled ? "Alarm is on" : "Alarm is off";
@@ -1785,7 +1897,8 @@ pickerOk.addEventListener("click",async function(){
       minute,
       enabled: true,
       name: "Alarm",
-      scheduledDate: null
+      scheduledDate: null,
+      durationSec: 10
     }));
   }
 
@@ -1804,7 +1917,7 @@ dayChips.forEach(function(chip){
   });
 });
 
-let selectedDate = null; // Date being edited in modal
+let selectedDate = null; // date edited in modal
 let viewYear = (new Date()).getFullYear();
 let viewMonth = (new Date()).getMonth();
 
@@ -2013,8 +2126,14 @@ detailsDelete.addEventListener("click",function(){
 detailsSave.addEventListener("click",function(){
   if(activeAlarmId){
     const alarm = getAlarmById(activeAlarmId);
-    if(alarm && detailsNameInput){
-      alarm.name = String(detailsNameInput.value || "Alarm").trim() || "Alarm";
+    if(alarm){
+      if(detailsNameInput){
+        alarm.name = String(detailsNameInput.value || "Alarm").trim() || "Alarm";
+      }
+      if(detailsDurationSlider){
+        const dur = parseInt(detailsDurationSlider.value || "10",10);
+        alarm.durationSec = Math.min(20,Math.max(5,isNaN(dur)?10:dur));
+      }
       persistAlarms();
       renderAlarms();
       refreshDetails();
@@ -2028,6 +2147,14 @@ if(detailsOverlay){
   detailsOverlay.addEventListener("click",function(){
     if(detailsSheet) detailsSheet.classList.remove("open");
     detailsOverlay.classList.remove("open");
+  });
+}
+
+if(detailsDurationSlider && detailsDurationLabel){
+  detailsDurationSlider.addEventListener("input",function(){
+    const v = parseInt(detailsDurationSlider.value || "10",10);
+    const clamped = Math.min(20,Math.max(5,isNaN(v)?10:v));
+    detailsDurationLabel.textContent = clamped + " sec";
   });
 }
 
@@ -2053,7 +2180,7 @@ function listenSlackNotifications(){
       const keys = Object.keys(data);
       const latestKey = keys[keys.length - 1];
 
-      // ignore if already shown
+      /*ignore if already shown notification*/
       if(latestKey === lastNotificationId) return;
 
       const last = data[latestKey];
