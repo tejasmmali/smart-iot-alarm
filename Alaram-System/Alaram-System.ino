@@ -3,12 +3,12 @@
 #include <ArduinoJson.h>
 #include "time.h"
 
-/* ================= WIFI ================= */
+/* WIFI */
 
 const char* ssid = "BAPPA 3";
 const char* password = "tej@$m@li7122007@@$";
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 
 const char* firebaseURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json";
@@ -19,301 +19,389 @@ const char* slackURL =
 const char* animationURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/animation/mode.json";
 
-/* ================= VARIABLES ================= */
+/* BUTTONS */
+
+const int modeButton = 25;
+const int stopButton = 26;
+
+bool lastModeState = HIGH;
+bool lastStopState = HIGH;
+unsigned long lastButtonTime = 0;
+
+/* VARIABLES */
 
 String lastSlackID = "";
-String lastAnimationMode = "";
+String lastAnimationMode = "off";
 
 unsigned long lastSlackFetch = 0;
 unsigned long lastAlarmFetch = 0;
 unsigned long lastAnimationFetch = 0;
 unsigned long lastTimeSend = 0;
 
-/* ================= NTP ================= */
+/* NTP */
 
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 19800;
 const int daylightOffset_sec = 0;
 
-/* ================= SERIAL ================= */
+/* SERIAL */
 
 HardwareSerial mySerial(2);
 
 /* ================= SETUP ================= */
 
-void setup() {
+void setup(){
 
-  Serial.begin(115200);
-  mySerial.begin(9600, SERIAL_8N1, 16, 17);
+Serial.begin(115200);
 
-  WiFi.begin(ssid, password);
+mySerial.begin(9600, SERIAL_8N1, 16, 17);
 
-  Serial.print("Connecting to WiFi");
+pinMode(modeButton, INPUT_PULLUP);
+pinMode(stopButton, INPUT_PULLUP);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+WiFi.begin(ssid, password);
 
-  Serial.println("\nWiFi Connected");
+Serial.print("Connecting WiFi");
 
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+while(WiFi.status()!=WL_CONNECTED){
+delay(500);
+Serial.print(".");
+}
+
+Serial.println("\nWiFi Connected");
+
+configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
 /* ================= LOOP ================= */
 
-void loop() {
+void loop(){
 
-  unsigned long now = millis();
+handleButtons();
 
-  /* SEND TIME EVERY SECOND */
+unsigned long now = millis();
 
-  if (now - lastTimeSend >= 1000) {
-    lastTimeSend = now;
-    sendTimeToUNO();
-  }
+/* SEND TIME */
 
-  /* FETCH ALARMS */
+if(now-lastTimeSend>=1000){
+lastTimeSend=now;
+sendTimeToUNO();
+}
 
-  if (now - lastAlarmFetch >= 10000) {
-    lastAlarmFetch = now;
-    fetchAlarmFromFirebase();
-  }
+/* FETCH ALARMS */
 
-  /* FETCH SLACK */
+if(now-lastAlarmFetch>=10000){
+lastAlarmFetch=now;
+fetchAlarmFromFirebase();
+}
 
-  if (now - lastSlackFetch >= 8000) {
-    lastSlackFetch = now;
-    fetchSlackMessage();
-  }
+/* FETCH SLACK */
 
-  /* FETCH ANIMATION STATE */
+if(now-lastSlackFetch>=8000){
+lastSlackFetch=now;
+fetchSlackMessage();
+}
 
-  if (now - lastAnimationFetch >= 3000) {
-    lastAnimationFetch = now;
-    fetchAnimationState();
-  }
+/* FETCH ANIMATION */
+
+if(now-lastAnimationFetch>=3000){
+lastAnimationFetch=now;
+fetchAnimationState();
+}
+
+}
+
+/* ================= BUTTON CONTROL ================= */
+
+void handleButtons(){
+
+bool modeState=digitalRead(modeButton);
+bool stopState=digitalRead(stopButton);
+
+if(millis()-lastButtonTime>80){
+
+/* MODE BUTTON */
+
+if(modeState==LOW && lastModeState==HIGH){
+
+Serial.println("MODE BUTTON");
+
+if(lastAnimationMode=="wave"){
+
+lastAnimationMode="dino";
+mySerial.println("G");
+updateFirebaseAnimation("dino");
+
+}
+else if(lastAnimationMode=="dino"){
+
+lastAnimationMode="off";
+mySerial.println("C");
+updateFirebaseAnimation("off");
+
+}
+else{
+
+lastAnimationMode="wave";
+mySerial.println("W");
+updateFirebaseAnimation("wave");
+
+}
+}
+
+/* STOP BUTTON */
+
+if(stopState==LOW && lastStopState==HIGH){
+
+Serial.println("STOP BUTTON");
+
+mySerial.println("ACLEAR");
+
+}
+
+lastButtonTime=millis();
+}
+
+lastModeState=modeState;
+lastStopState=stopState;
+}
+
+/* ================= FIREBASE UPDATE ================= */
+
+void updateFirebaseAnimation(String mode){
+
+HTTPClient http;
+
+http.begin(animationURL);
+
+http.addHeader("Content-Type","application/json");
+
+String payload="\""+mode+"\"";
+
+http.PUT(payload);
+
+http.end();
+
 }
 
 /* ================= SEND TIME ================= */
 
-void sendTimeToUNO() {
+void sendTimeToUNO(){
 
-  struct tm timeinfo;
+struct tm timeinfo;
 
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to get NTP time");
-    return;
-  }
+if(!getLocalTime(&timeinfo)){
+Serial.println("NTP Failed");
+return;
+}
 
-  char buffer[20];
-  strftime(buffer, sizeof(buffer), "%H:%M:%S", &timeinfo);
+char buffer[20];
 
-  mySerial.print(buffer);
-  mySerial.print(",");
-  mySerial.println(timeinfo.tm_wday);
+strftime(buffer,sizeof(buffer),"%H:%M:%S",&timeinfo);
+
+mySerial.print(buffer);
+mySerial.print(",");
+mySerial.println(timeinfo.tm_wday);
 }
 
 /* ================= FETCH ANIMATION ================= */
 
-void fetchAnimationState() {
+void fetchAnimationState(){
 
-  if (WiFi.status() != WL_CONNECTED) return;
+if(WiFi.status()!=WL_CONNECTED) return;
 
-  HTTPClient http;
-  http.begin(animationURL);
+HTTPClient http;
 
-  int httpCode = http.GET();
+http.begin(animationURL);
 
-  if (httpCode != 200) {
-    http.end();
-    return;
-  }
+int httpCode=http.GET();
 
-  String mode = http.getString();
-  mode.replace("\"", "");
+if(httpCode!=200){
+http.end();
+return;
+}
 
-  if (mode == lastAnimationMode) {
-    http.end();
-    return;
-  }
+String mode=http.getString();
+mode.replace("\"","");
 
-  lastAnimationMode = mode;
+if(mode==lastAnimationMode){
+http.end();
+return;
+}
 
-  Serial.print("Animation Mode: ");
-  Serial.println(mode);
+lastAnimationMode=mode;
 
-  if (mode == "wave") {
+Serial.print("Animation Mode: ");
+Serial.println(mode);
 
-    mySerial.println("W");  // wave animation
+if(mode=="wave"){
+mySerial.println("W");
+}
+else if(mode=="dino"){
+mySerial.println("G");
+}
+else{
+mySerial.println("C");
+}
 
-  } else if (mode == "dino") {
-
-    mySerial.println("G");  // dino animation
-
-  } else {
-
-    mySerial.println("C");  // clear animation
-  }
-
-  http.end();
+http.end();
 }
 
 /* ================= FETCH ALARM ================= */
 
-void fetchAlarmFromFirebase() {
+void fetchAlarmFromFirebase(){
 
-  if (WiFi.status() != WL_CONNECTED) return;
+if(WiFi.status()!=WL_CONNECTED) return;
 
-  HTTPClient http;
-  http.begin(firebaseURL);
+HTTPClient http;
 
-  int httpCode = http.GET();
+http.begin(firebaseURL);
 
-  if (httpCode != 200) {
-    Serial.println("Alarm HTTP error");
-    http.end();
-    return;
-  }
+int httpCode=http.GET();
 
-  String payload = http.getString();
+if(httpCode!=200){
+http.end();
+return;
+}
 
-  DynamicJsonDocument doc(2048);
-  DeserializationError error = deserializeJson(doc, payload);
+String payload=http.getString();
 
-  if (error) {
-    Serial.println("Alarm JSON parse failed");
-    http.end();
-    return;
-  }
+DynamicJsonDocument doc(2048);
 
-  JsonArray alarms = doc.as<JsonArray>();
+if(deserializeJson(doc,payload)){
+http.end();
+return;
+}
 
-  struct tm timeinfo;
+JsonArray alarms=doc.as<JsonArray>();
 
-  if (!getLocalTime(&timeinfo)) {
-    http.end();
-    return;
-  }
+struct tm timeinfo;
 
-  int nowMinutes = timeinfo.tm_hour * 60 + timeinfo.tm_min;
+if(!getLocalTime(&timeinfo)){
+http.end();
+return;
+}
 
-  JsonObject bestAlarm;
-  int bestDiff = 1441;
-  bool found = false;
+int nowMinutes=timeinfo.tm_hour*60+timeinfo.tm_min;
 
-  for (JsonObject alarm : alarms) {
+JsonObject bestAlarm;
 
-    bool enabled = alarm["enabled"] | false;
-    if (!enabled) continue;
+int bestDiff=1441;
 
-    int hour = alarm["hour"] | -1;
-    int minute = alarm["minute"] | -1;
+bool found=false;
 
-    if (hour < 0 || minute < 0) continue;
+for(JsonObject alarm:alarms){
 
-    int alarmMinutes = hour * 60 + minute;
-    int diff = (alarmMinutes - nowMinutes + 1440) % 1440;
+bool enabled=alarm["enabled"]|false;
+if(!enabled) continue;
 
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      bestAlarm = alarm;
-      found = true;
-    }
-  }
+int hour=alarm["hour"]|-1;
+int minute=alarm["minute"]|-1;
 
-  if (found) {
+if(hour<0 || minute<0) continue;
 
-    int hour = bestAlarm["hour"];
-    int minute = bestAlarm["minute"];
+int alarmMinutes=hour*60+minute;
+int diff=(alarmMinutes-nowMinutes+1440)%1440;
 
-    String name = bestAlarm["name"] | "ALARM";
+if(diff<bestDiff){
+bestDiff=diff;
+bestAlarm=alarm;
+found=true;
+}
 
-    int durationSec = bestAlarm["durationSec"] | 10;
+}
 
-    mySerial.print("A");
+if(found){
 
-    if (hour < 10) mySerial.print("0");
-    mySerial.print(hour);
-    mySerial.print(":");
+int hour=bestAlarm["hour"];
+int minute=bestAlarm["minute"];
 
-    if (minute < 10) mySerial.print("0");
-    mySerial.println(minute);
+String name=bestAlarm["name"]|"ALARM";
+int duration=bestAlarm["durationSec"]|10;
 
-    mySerial.print("N");
-    mySerial.println(name);
+mySerial.print("A");
 
-    mySerial.print("D");
+if(hour<10) mySerial.print("0");
+mySerial.print(hour);
+mySerial.print(":");
 
-    if (durationSec < 10) mySerial.print("0");
-    mySerial.println(durationSec);
-  }
-  else {
+if(minute<10) mySerial.print("0");
+mySerial.println(minute);
 
-    mySerial.println("ACLEAR");
-  }
+mySerial.print("N");
+mySerial.println(name);
 
-  http.end();
+mySerial.print("D");
+mySerial.println(duration);
+
+}
+else{
+
+mySerial.println("ACLEAR");
+
+}
+
+http.end();
 }
 
 /* ================= FETCH SLACK ================= */
 
-void fetchSlackMessage() {
+void fetchSlackMessage(){
 
-  if (WiFi.status() != WL_CONNECTED) return;
+if(WiFi.status()!=WL_CONNECTED) return;
 
-  HTTPClient http;
-  http.begin(slackURL);
+HTTPClient http;
 
-  int httpCode = http.GET();
+http.begin(slackURL);
 
-  if (httpCode != 200) {
-    http.end();
-    return;
-  }
+int httpCode=http.GET();
 
-  String payload = http.getString();
+if(httpCode!=200){
+http.end();
+return;
+}
 
-  DynamicJsonDocument doc(4096);
-  DeserializationError error = deserializeJson(doc, payload);
+String payload=http.getString();
 
-  if (error) {
-    http.end();
-    return;
-  }
+DynamicJsonDocument doc(4096);
 
-  JsonObject obj = doc.as<JsonObject>();
+if(deserializeJson(doc,payload)){
+http.end();
+return;
+}
 
-  String latestKey = "";
+JsonObject obj=doc.as<JsonObject>();
 
-  for (JsonPair kv : obj) {
-    latestKey = kv.key().c_str();
-  }
+String latestKey="";
 
-  if (latestKey == "" || latestKey == lastSlackID) {
-    http.end();
-    return;
-  }
+for(JsonPair kv:obj){
+latestKey=kv.key().c_str();
+}
 
-  lastSlackID = latestKey;
+if(latestKey=="" || latestKey==lastSlackID){
+http.end();
+return;
+}
 
-  JsonObject msg = obj[latestKey];
+lastSlackID=latestKey;
 
-  String user = msg["user"] | "Slack";
-  String text = msg["text"] | "";
+JsonObject msg=obj[latestKey];
 
-  if (text == "") {
-    http.end();
-    return;
-  }
+String user=msg["user"]|"Slack";
+String text=msg["text"]|"";
 
-  mySerial.print("S");
-  mySerial.println(user);
+if(text==""){
+http.end();
+return;
+}
 
-  mySerial.print("M");
-  mySerial.println(text);
+mySerial.print("S");
+mySerial.println(user);
 
-  Serial.println("Slack Notification Sent");
+mySerial.print("M");
+mySerial.println(text);
 
-  http.end();
+Serial.println("Slack Notification Sent");
+
+http.end();
 }
