@@ -1462,6 +1462,25 @@ const font = {
 
 };
 
+async function syncAnimation(mode){
+
+  try{
+
+    await fetch(
+      "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/animation.json",
+      {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ mode })
+      }
+    );
+
+  }catch(e){
+    console.error(e);
+  }
+
+}
+
 /*lcd drawing */
 
 function clearDisplay(){
@@ -1581,7 +1600,7 @@ function enableDinoAnimationMode(){
 
   animationType = "dino";
   animationMode = true;
-
+ syncAnimation("dino");
   cactusX = 15;
   groundOffset = 0;
   jumping = false;
@@ -1590,12 +1609,17 @@ function enableDinoAnimationMode(){
 }
 
 function enableWaveAnimationMode(){
+
   animationType = "wave";
   animationMode = true;
+
+  syncAnimation("wave");
+
 }
 
 function stopAnimationMode(){
   animationMode = false;
+  syncAnimation("off");
   animFrame = 0;
   dinoX = 0;
   dinoStep = 0;

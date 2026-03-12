@@ -3,34 +3,43 @@
 #include <ArduinoJson.h>
 #include "time.h"
 
+/* ================= WIFI ================= */
 
 const char* ssid = "BAPPA 3";
 const char* password = "tej@$m@li7122007@@$";
 
-
+/* ================= FIREBASE ================= */
 
 const char* firebaseURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json";
 
-
 const char* slackURL =
 "https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/slack_messages.json";
 
-String lastSlackID = "";
-unsigned long lastSlackFetch = 0;
+const char* animationURL =
+"https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/animation/mode.json";
 
+/* ================= VARIABLES ================= */
+
+String lastSlackID = "";
+String lastAnimationMode = "";
+
+unsigned long lastSlackFetch = 0;
+unsigned long lastAlarmFetch = 0;
+unsigned long lastAnimationFetch = 0;
+unsigned long lastTimeSend = 0;
+
+/* ================= NTP ================= */
 
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 19800;
 const int daylightOffset_sec = 0;
 
+/* ================= SERIAL ================= */
 
-HardwareSerial mySerial(2);   
+HardwareSerial mySerial(2);
 
-unsigned long lastTimeSend = 0;
-unsigned long lastAlarmFetch = 0;
-
-
+/* ================= SETUP ================= */
 
 void setup() {
 
@@ -51,36 +60,42 @@ void setup() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
+/* ================= LOOP ================= */
 
 void loop() {
 
   unsigned long now = millis();
 
-  /* ===== SEND TIME EVERY SECOND ===== */
+  /* SEND TIME EVERY SECOND */
 
   if (now - lastTimeSend >= 1000) {
     lastTimeSend = now;
     sendTimeToUNO();
   }
 
-  /* ===== FETCH ALARM EVERY 10s ===== */
+  /* FETCH ALARMS */
 
   if (now - lastAlarmFetch >= 10000) {
     lastAlarmFetch = now;
     fetchAlarmFromFirebase();
   }
 
-  /* ===== FETCH SLACK MESSAGE ===== */
+  /* FETCH SLACK */
 
   if (now - lastSlackFetch >= 8000) {
     lastSlackFetch = now;
     fetchSlackMessage();
   }
+
+  /* FETCH ANIMATION STATE */
+
+  if (now - lastAnimationFetch >= 3000) {
+    lastAnimationFetch = now;
+    fetchAnimationState();
+  }
 }
 
-
-/* ================= SEND TIME ===================== */
-
+/* ================= SEND TIME ================= */
 
 void sendTimeToUNO() {
 
@@ -99,9 +114,52 @@ void sendTimeToUNO() {
   mySerial.println(timeinfo.tm_wday);
 }
 
+/* ================= FETCH ANIMATION ================= */
 
-/* ================= FETCH ALARM =================== */
+void fetchAnimationState() {
 
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  http.begin(animationURL);
+
+  int httpCode = http.GET();
+
+  if (httpCode != 200) {
+    http.end();
+    return;
+  }
+
+  String mode = http.getString();
+  mode.replace("\"", "");
+
+  if (mode == lastAnimationMode) {
+    http.end();
+    return;
+  }
+
+  lastAnimationMode = mode;
+
+  Serial.print("Animation Mode: ");
+  Serial.println(mode);
+
+  if (mode == "wave") {
+
+    mySerial.println("W");  // wave animation
+
+  } else if (mode == "dino") {
+
+    mySerial.println("G");  // dino animation
+
+  } else {
+
+    mySerial.println("C");  // clear animation
+  }
+
+  http.end();
+}
+
+/* ================= FETCH ALARM ================= */
 
 void fetchAlarmFromFirebase() {
 
@@ -132,8 +190,8 @@ void fetchAlarmFromFirebase() {
   JsonArray alarms = doc.as<JsonArray>();
 
   struct tm timeinfo;
+
   if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to get time for alarm selection");
     http.end();
     return;
   }
@@ -151,6 +209,7 @@ void fetchAlarmFromFirebase() {
 
     int hour = alarm["hour"] | -1;
     int minute = alarm["minute"] | -1;
+
     if (hour < 0 || minute < 0) continue;
 
     int alarmMinutes = hour * 60 + minute;
@@ -164,14 +223,13 @@ void fetchAlarmFromFirebase() {
   }
 
   if (found) {
+
     int hour = bestAlarm["hour"];
     int minute = bestAlarm["minute"];
-    String name = bestAlarm["name"] | "ALARM";
-    int durationSec = bestAlarm["durationSec"] | 10;
-    if (durationSec < 5) durationSec = 5;
-    if (durationSec > 20) durationSec = 20;
 
-    /* ===== SEND ALARM TIME ===== */
+    String name = bestAlarm["name"] | "ALARM";
+
+    int durationSec = bestAlarm["durationSec"] | 10;
 
     mySerial.print("A");
 
@@ -182,36 +240,23 @@ void fetchAlarmFromFirebase() {
     if (minute < 10) mySerial.print("0");
     mySerial.println(minute);
 
-    /* ===== SEND ALARM NOTE ===== */
-
     mySerial.print("N");
     mySerial.println(name);
 
-    /* ===== SEND DURATION (seconds) ===== */
-
     mySerial.print("D");
+
     if (durationSec < 10) mySerial.print("0");
     mySerial.println(durationSec);
+  }
+  else {
 
-    Serial.print("Alarm Sent to UNO: ");
-    Serial.print(hour);
-    Serial.print(":");
-    Serial.print(minute);
-    Serial.print(" for ");
-    Serial.print(durationSec);
-    Serial.println("s");
-  } else {
-  
     mySerial.println("ACLEAR");
-    Serial.println("No enabled alarms; sent ACLEAR");
   }
 
   http.end();
 }
 
-
-/* ================= FETCH SLACK =================== */
-
+/* ================= FETCH SLACK ================= */
 
 void fetchSlackMessage() {
 
@@ -233,12 +278,6 @@ void fetchSlackMessage() {
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error) {
-    Serial.println("Slack JSON parse failed");
-    http.end();
-    return;
-  }
-
-  if (!doc.is<JsonObject>()) {
     http.end();
     return;
   }
@@ -268,8 +307,6 @@ void fetchSlackMessage() {
     return;
   }
 
-  /* ===== SEND SLACK MESSAGE TO UNO ===== */
-
   mySerial.print("S");
   mySerial.println(user);
 
@@ -277,7 +314,6 @@ void fetchSlackMessage() {
   mySerial.println(text);
 
   Serial.println("Slack Notification Sent");
-  Serial.println(user + ": " + text);
 
   http.end();
 }
