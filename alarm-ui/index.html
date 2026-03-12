@@ -48,7 +48,7 @@
     position:relative;
     width:100%;
     max-width:960px;
-    padding:0 0 40px;
+    padding:0 0 80px;
     background:var(--bg-main);
     display:flex;
     flex-direction:column;
@@ -242,23 +242,50 @@
   }
 
   .nav-bar{
-    display:none;
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:16px;
+    width:calc(100% - 24px);
+    max-width:960px;
+    padding:6px 10px;
+    border-radius:18px;
+    background:var(--bg-card-soft);
+    border:2px solid #000000;
+    display:flex;
+    gap:8px;
+    z-index:10;
   }
 
   .nav-item{
-    display:none;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    padding:6px 8px;
+    border-radius:999px;
+    border:2px solid #000000;
+    background:#ffffff;
+    cursor:pointer;
+    font-size:11px;
+    color:var(--text-muted);
   }
 
   .nav-item.active{
-    opacity:1;
+    background:#000000;
+    color:#ffffff;
   }
 
   .nav-icon{
-    display:none;
+    font-size:18px;
+    line-height:1;
   }
 
-  .nav-item.active .nav-icon{
-    background:#271918;
+  .nav-label{
+    font-size:11px;
+    text-transform:lowercase;
   }
   /* time picking overlay */
   .time-picker-overlay{
@@ -955,7 +982,7 @@
     </div>
   </div>
 
-  <div class="screen">
+  <div class="screen screen-panel" id="screen-alarms">
     <div class="screen-header">
       <img src="/images/flag-orpheus-left-bw.svg" alt="Logo" class="header-logo">
       <div class="kebab">⋮</div>
@@ -1059,6 +1086,48 @@
       </div>
     </div>
 
+  </div>
+
+  <div class="screen screen-panel" id="screen-animations" style="display:none;">
+    <div class="screen-header">
+      <div class="lcd-label">Animations</div>
+    </div>
+    <div class="alarm-list" style="border-top:none;margin-top:0;padding-top:0;">
+      <div class="alarm-card" style="flex-direction:column;align-items:flex-start;cursor:default;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">LCD animations</div>
+        <div style="font-size:12px;color:var(--text-muted);">
+          Use this screen to choose and control LCD animations for your desk alarm. (Placeholder UI)
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="details-btn" id="start-animation" type="button" style="min-width:auto;padding:8px 14px;">Wave</button>
+          <button class="details-btn" id="start-dino-animation" type="button" style="min-width:auto;padding:8px 14px;">Dino</button>
+          <button class="details-btn" id="stop-animation" type="button" style="min-width:auto;padding:8px 14px;background:#ffffff;color:#000000;">Stop</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-panel" id="screen-connect" style="display:none;">
+    <div class="screen-header">
+      <div class="lcd-label">Notifications</div>
+    </div>
+    <div class="alarm-list" style="border-top:none;margin-top:0;padding-top:0;">
+      <div class="alarm-card" style="flex-direction:column;align-items:flex-start;cursor:default;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Notification integrations</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">
+          Connect external apps that can send notifications to your desk alarm. Slack is supported first; more apps can be added here later.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+              <span class="material-icons" style="font-size:18px;">chat</span>
+              <span>Slack notifications</span>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted);">configured via Firebase</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <button class="fab" id="fab-btn" aria-label="Add alarm">+</button>
@@ -1226,6 +1295,21 @@
       </div>
     </div>
   </div>
+
+  <div class="nav-bar">
+    <button class="nav-item active" data-screen="alarms" type="button">
+      <span class="material-icons nav-icon">alarm</span>
+      <span class="nav-label">alarms</span>
+    </button>
+    <button class="nav-item" data-screen="animations" type="button">
+      <span class="material-icons nav-icon">animation</span>
+      <span class="nav-label">animation</span>
+    </button>
+    <button class="nav-item" data-screen="connect" type="button">
+      <span class="material-icons nav-icon">notifications</span>
+      <span class="nav-label">notifications</span>
+    </button>
+  </div>
 </div>
 
 <script>
@@ -1254,6 +1338,14 @@ let notificationText = "";
 let notificationUser = "";
 let notificationStart = 0;
 let lastNotificationId = null;
+let animationMode = false;
+let animFrame = 0;
+let animationType = "wave"; // "wave" | "dino"
+let cactusX = 15;
+let groundOffset = 0;
+
+let jumping = false;
+let jumpFrame = 0;
 
 const days = ["SU","MO","TU","WE","TH","FR","SA"];
 
@@ -1313,6 +1405,59 @@ const font = {
 "11111",
 "00100",
 "00000"
+],
+"@":[
+"00110",
+"01111",
+"11110",
+"11111",
+"01110",
+"01110",
+"01010",
+"00000"
+],
+
+"&":[
+"00110",
+"01111",
+"11110",
+"11111",
+"01110",
+"01110",
+"00110",
+"00000"
+],
+
+"#":[
+"00100",
+"00110",
+"10101",
+"10101",
+"10101",
+"00110",
+"00100",
+"00000"
+],
+
+".":[
+"00000",
+"00000",
+"00000",
+"00000",
+"00000",
+"00000",
+"00100",
+"00000"
+],
+"%":[
+"00000",
+"00000",
+"00000",
+"00100",
+"01110",
+"11111",
+"00000",
+"00000"
 ]
 
 };
@@ -1353,6 +1498,111 @@ function setLCD(l1,l2){
   print(l2.padEnd(16," "),1);
 }
 
+// animation mode
+function runWaveAnimation(){
+  clearDisplay();
+  for(let i=0;i<16;i++){
+    let y = Math.floor((Math.sin((i+animFrame)/2)+1)*3);
+    drawChar("%",i,y>3?1:0);
+  }
+  animFrame += 0.3;
+}
+
+function runDinoAnimation(){
+
+  clearDisplay();
+
+  /* scrolling ground */
+
+  for(let i=0;i<16;i++){
+    if((i + groundOffset) % 2 === 0){
+      drawChar(".",i,1);
+    }
+  }
+
+  groundOffset++;
+
+
+  /* dino leg animation */
+
+  const frame = Math.floor(animFrame % 2);
+  const dinoChar = frame === 0 ? "@" : "&";
+
+
+  /* jump logic */
+
+  let dinoRow = jumping ? 0 : 1;
+
+  drawChar(dinoChar,2,dinoRow);
+
+
+  /* cactus movement */
+
+  drawChar("#",cactusX,1);
+
+  cactusX--;
+
+  if(cactusX < -1){
+    cactusX = 16;
+  }
+
+
+  /* collision reset (simple animation mode) */
+
+  if(cactusX === 2 && !jumping){
+    cactusX = 16;
+  }
+
+
+  /* jump animation timing */
+
+  if(jumping){
+    jumpFrame++;
+
+    if(jumpFrame > 6){
+      jumping = false;
+      jumpFrame = 0;
+    }
+  }
+
+  animFrame += 0.25;
+}
+
+function runAnimation(){
+  if(animationType === "dino") runDinoAnimation();
+  else runWaveAnimation();
+}
+
+function enableAnimationMode(){
+  animationMode = true;
+}
+
+function enableDinoAnimationMode(){
+
+  animationType = "dino";
+  animationMode = true;
+
+  cactusX = 15;
+  groundOffset = 0;
+  jumping = false;
+  jumpFrame = 0;
+  animFrame = 0;
+}
+
+function enableWaveAnimationMode(){
+  animationType = "wave";
+  animationMode = true;
+}
+
+function stopAnimationMode(){
+  animationMode = false;
+  animFrame = 0;
+  dinoX = 0;
+  dinoStep = 0;
+  cactusX = 15;
+  cactusTick = 0;
+  dinoSlideStep = 0;
+}
 /*clock screen*/
 
 function toISODateLocal(dt){
@@ -1385,6 +1635,17 @@ function updateClock(){
     (hh+":"+mm+":"+ss+" "+period)
     .padEnd(13," ")
     + " "+dayName;
+
+    if(animationMode){
+
+runAnimation();
+
+if(notificationActive){
+  animationMode = false;
+}
+
+return;
+}
 
     /*slack notification*/
 
@@ -1497,6 +1758,14 @@ return;
   setLCD(topRow,bottomRow);
 
   /*trigger check*/
+  if(nextAlarm && bestDiff===0 && second===0){
+
+ringing=true;
+ringStart=Date.now();
+ringingAlarmId=nextAlarm.id;
+animationMode=false;
+
+}
 
   if(nextAlarm && bestDiff===0 && second===0){
 
@@ -1551,6 +1820,13 @@ const calPrev = document.getElementById("cal-prev");
 const calNext = document.getElementById("cal-next");
 const calClear = document.getElementById("cal-clear");
 const calToday = document.getElementById("cal-today");
+
+const navItems = document.querySelectorAll(".nav-item");
+const screens = {
+  alarms: document.getElementById("screen-alarms"),
+  animations: document.getElementById("screen-animations"),
+  connect: document.getElementById("screen-connect")
+};
 
 let pickerIsPm = false;
 
@@ -2156,6 +2432,41 @@ if(detailsDurationSlider && detailsDurationLabel){
     const clamped = Math.min(20,Math.max(5,isNaN(v)?10:v));
     detailsDurationLabel.textContent = clamped + " sec";
   });
+}
+
+function showScreen(key){
+  Object.keys(screens).forEach(function(name){
+    var el = screens[name];
+    if(!el) return;
+    el.style.display = (name === key) ? "flex" : "none";
+  });
+  navItems.forEach(function(item){
+    item.classList.toggle("active", item.dataset.screen === key);
+  });
+}
+
+navItems.forEach(function(item){
+  item.addEventListener("click",function(){
+    var target = item.dataset.screen || "alarms";
+    showScreen(target);
+  });
+});
+
+showScreen("alarms");
+
+const startAnimationBtn = document.getElementById("start-animation");
+if(startAnimationBtn){
+  startAnimationBtn.addEventListener("click", enableWaveAnimationMode);
+}
+
+const startDinoBtn = document.getElementById("start-dino-animation");
+if(startDinoBtn){
+  startDinoBtn.addEventListener("click", enableDinoAnimationMode);
+}
+
+const stopAnimationBtn = document.getElementById("stop-animation");
+if(stopAnimationBtn){
+  stopAnimationBtn.addEventListener("click", stopAnimationMode);
 }
 
 refreshPickerDisplays();
