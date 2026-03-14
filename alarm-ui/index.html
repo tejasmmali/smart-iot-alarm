@@ -969,6 +969,42 @@
     }
   }
 
+  .animation-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:24px;
+}
+
+.animation-card{
+  background:#ffffff;
+  border-radius:18px;
+  padding:16px;
+
+  border:3px solid #000000;
+  box-shadow:0 4px 0 #000000;
+
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.animation-title{
+  font-size:15px;
+  font-weight:600;
+}
+
+.animation-desc{
+  font-size:12px;
+  color:var(--text-muted);
+}
+
+.animation-controls{
+  display:flex;
+  gap:10px;
+  margin-top:8px;
+}
+
+
   
 </style>
 </head>
@@ -1088,47 +1124,107 @@
 
   </div>
 
-  <div class="screen screen-panel" id="screen-animations" style="display:none;">
-    <div class="screen-header">
-      <div class="lcd-label">Animations</div>
-    </div>
-    <div class="alarm-list" style="border-top:none;margin-top:0;padding-top:0;">
-      <div class="alarm-card" style="flex-direction:column;align-items:flex-start;cursor:default;">
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">LCD animations</div>
-        <div style="font-size:12px;color:var(--text-muted);">
-          Use this screen to choose and control LCD animations for your desk alarm. (Placeholder UI)
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="details-btn" id="start-animation" type="button" style="min-width:auto;padding:8px 14px;">Wave</button>
-          <button class="details-btn" id="start-dino-animation" type="button" style="min-width:auto;padding:8px 14px;">Dino</button>
-          <button class="details-btn" id="stop-animation" type="button" style="min-width:auto;padding:8px 14px;background:#ffffff;color:#000000;">Stop</button>
-        </div>
-      </div>
-    </div>
+<div class="screen screen-panel" id="screen-animations" style="display:none;">
+
+  <div class="screen-header">
+    <div class="lcd-label">ANIMATIONS</div>
   </div>
 
-  <div class="screen screen-panel" id="screen-connect" style="display:none;">
-    <div class="screen-header">
-      <div class="lcd-label">Notifications</div>
-    </div>
-    <div class="alarm-list" style="border-top:none;margin-top:0;padding-top:0;">
-      <div class="alarm-card" style="flex-direction:column;align-items:flex-start;cursor:default;">
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Notification integrations</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">
-          Connect external apps that can send notifications to your desk alarm. Slack is supported first; more apps can be added here later.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
-              <span class="material-icons" style="font-size:18px;">chat</span>
-              <span>Slack notifications</span>
-            </div>
-            <span style="font-size:11px;color:var(--text-muted);">configured via Firebase</span>
-          </div>
-        </div>
+  <div class="animation-grid">
+
+    <div class="animation-card">
+      <div class="animation-title">Wave Animation</div>
+      <div class="animation-desc">Smooth LCD wave movement</div>
+
+      <div class="animation-controls">
+        <button class="details-btn" id="start-animation">▶ Play</button>
+        <button class="details-btn" id="stop-animation">■ Stop</button>
       </div>
     </div>
+
+    <div class="animation-card">
+      <div class="animation-title">Dino Run</div>
+      <div class="animation-desc">Running dinosaur with cactus obstacle</div>
+
+      <div class="animation-controls">
+        <button class="details-btn" id="start-dino-animation">▶ Play</button>
+        <button class="details-btn" id="stop-animation">■ Stop</button>
+      </div>
+    </div>
+
   </div>
+
+</div>
+
+
+<div class="screen screen-panel" id="screen-connect" style="display:none;">
+
+  <div class="screen-header">
+    <div class="lcd-label">NOTIFICATIONS</div>
+  </div>
+
+  <div class="alarm-list" style="border-top:none;margin-top:0;padding-top:0;">
+
+    <!-- Slack Card -->
+<div class="alarm-card" style="flex-direction:column;align-items:flex-start;">
+  
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+    <i class="fa-brands fa-slack" style="font-size:18px;"></i>
+    <span style="font-size:14px;font-weight:600;">Slack</span>
+  </div>
+
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+    Connect Slack to show notifications on your desk alarm.
+  </div>
+
+  <button class="details-btn" id="slack-connect-btn">
+    Add Slack
+  </button>
+
+</div>
+
+
+    <!-- Discord Card -->
+    <div class="alarm-card" style="flex-direction:column;align-items:flex-start;">
+      
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <i class="fa-brands fa-discord" style="font-size:18px;"></i>
+        <span style="font-size:14px;font-weight:600;">Discord</span>
+      </div>
+
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+        Receive Discord notifications on your desk alarm.
+      </div>
+
+      <button class="details-btn" disabled style="opacity:0.5;border-style: dashed;">
+        Coming Soon
+      </button>
+
+    </div>
+
+
+    <!-- Gmail Card -->
+    <div class="alarm-card" style="flex-direction:column;align-items:flex-start;">
+      
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <i class="fa-solid fa-envelope" style="font-size:18px;"></i>
+        <span style="font-size:14px;font-weight:600;">Gmail</span>
+      </div>
+
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+        Show new email notifications on your desk alarm.
+      </div>
+
+      <button class="details-btn" disabled style="opacity:0.5; border-style: dashed;">
+        Coming Soon
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
 
   <button class="fab" id="fab-btn" aria-label="Add alarm">+</button>
 
@@ -2488,10 +2584,9 @@ if(startDinoBtn){
   startDinoBtn.addEventListener("click", enableDinoAnimationMode);
 }
 
-const stopAnimationBtn = document.getElementById("stop-animation");
-if(stopAnimationBtn){
-  stopAnimationBtn.addEventListener("click", stopAnimationMode);
-}
+document.querySelectorAll("#stop-animation").forEach(btn=>{
+  btn.addEventListener("click", stopAnimationMode);
+});
 
 refreshPickerDisplays();
 loadAlarms();
@@ -2538,6 +2633,42 @@ function listenSlackNotifications(){
 }
 
 listenSlackNotifications();
+
+
+/* Slack connect */
+
+const slackBtn = document.getElementById("slack-connect-btn");
+
+function updateSlackUI(){
+
+  const connected = localStorage.getItem("slack_connected");
+
+  if(connected && slackBtn){
+    slackBtn.textContent = "Connected";
+    slackBtn.style.background = "#000";
+    slackBtn.style.color = "#fff";
+  }
+
+}
+
+if(slackBtn){
+
+  slackBtn.addEventListener("click", function(){
+
+    localStorage.setItem("slack_connected","true");
+
+    window.open(
+      "https://hackclub.slack.com/oauth?client_id=2210535565.10679650721600&scope=users%3Aread%2Capp_mentions%3Aread%2Cchannels%3Ahistory%2Cim%3Ahistory%2Cim%3Aread&user_scope=&redirect_uri=&state=&granular_bot_scope=1&single_channel=0&install_redirect=install-on-team&tracked=1&user_default=0&team=1",
+      "_blank"
+    );
+
+    updateSlackUI();
+
+  });
+
+}
+
+updateSlackUI();
 
 
 </script>
