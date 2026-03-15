@@ -1,6 +1,6 @@
 # Smart Alarm Clock
 Smart Iot based Desk Alarm clock which have a web based synced simulation control and it also notify you on screen when you get an message or you got pinged on slack its keeps you updated and its also have animation Screens to make it your desk showcase 
-
+## WEB UI DEMO - https://smart-alarm-demo.vercel.app
 # Componet Used -
 - Aruduino UNO (to control)
 - ESP32 (to connect with Internet / Firebase )
@@ -10,6 +10,7 @@ Smart Iot based Desk Alarm clock which have a web based synced simulation contro
 
 # Circuit 
  <img src="/images/circuit_image.png"/>
+ circuit deign link - https://app.cirkitdesigner.com/project/50af74ac-e6c1-45c3-b1f8-8858fe94862f
 
 # Programing 
 **For Web Ui**
@@ -71,7 +72,7 @@ so Esp32 is connect to through TX2 to RX arduino and all other component connect
         │ Buzzer 
         └──────────────────────┘
 
-
+### All the Problem i faced and how did i solved it thats given in devlg please checout!
 # NOTE -
 <p> i gonna make this arlarm a real product by making cad and 3d printing its body and upgrading some features .</p>
 <p>i am pausing this project development because of examination after exams i will make a plan to ugrade this in full product .</p>
