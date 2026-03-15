@@ -225,14 +225,6 @@
     background:#ffffff;
   }
 
-  .fab{
-    display:none;
-  }
-
-  .fab:active{
-    transform:translateY(1px) scale(0.99);
-    box-shadow:0 4px 18px rgba(0,0,0,0.8);
-  }
   .nav-bar{
   position:fixed;
 
