@@ -9,7 +9,7 @@ Smart Iot based Desk Alarm clock which have a web based synced simulation contro
 - PUSH BUTTONS
 
 # Circuit 
- <img src="https://raw.githubusercontent.com/tejasmmali/smart-iot-alarm/refs/heads/main/images/circuit_image.png"/>
+ <img src="https://raw.githubusercontent.com/tejasmmali/smart-iot-alarm/refs/heads/main/images/circuit_image.png" alt="circuit image"/>
  circuit deign link - https://app.cirkitdesigner.com/project/50af74ac-e6c1-45c3-b1f8-8858fe94862f
 
 # Programing 
