@@ -72,7 +72,7 @@ so Esp32 is connect to through TX2 to RX arduino and all other component connect
         │ Buzzer 
         └──────────────────────┘
 
-### All the Problem i faced and how did i solved it thats given in devlg please checout!
+### All the Problem i faced and how did i solved it thats given in devlog please checout!
 # NOTE -
 <p> i gonna make this arlarm a real product by making cad and 3d printing its body and upgrading some features .</p>
 <p>i am pausing this project development because of examination after exams i will make a plan to ugrade this in full product .</p>
