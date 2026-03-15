@@ -10,6 +10,7 @@ Smart Iot based Desk Alarm clock which have a web based synced simulation contro
 
 # Circuit 
  <img src="https://raw.githubusercontent.com/tejasmmali/smart-iot-alarm/refs/heads/main/images/circuit_image.png" alt="circuit image"/>
+ image of ciruit
  circuit deign link - https://app.cirkitdesigner.com/project/50af74ac-e6c1-45c3-b1f8-8858fe94862f
 
 # Programing 
@@ -74,10 +75,10 @@ so Esp32 is connect to through TX2 to RX arduino and all other component connect
 
 ### All the Problem i faced and how did i solved it thats given in devlog please checout!
 # NOTE -
-<p> i gonna make this arlarm a real product by making cad and 3d printing its body and upgrading some features .</p>
-<p>i am pausing this project development because of examination after exams i will make a plan to ugrade this in full product .</p>
-<p>in future i am making this project web control open to all anyone can make there alarnm clcok and use this web ui in by connecting it through server which have there UID</p>
-<p>and i am gonna make full guide website for how to make this alarm step by step guide </p>
+ i gonna make this arlarm a real product by making cad and 3d printing its body and upgrading some features .
+i am pausing this project development because of examination after exams i will make a plan to ugrade this in full product 
+in future i am making this project web control open to all anyone can make there alarnm clcok and use this web ui in by connecting it through server which have there UID</p>
+and i am gonna make full guide website for how to make this alarm step by step guide </p>
 
 # THANK YOU ! 
 
