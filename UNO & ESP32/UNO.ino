@@ -5,17 +5,12 @@
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 SoftwareSerial espSerial(10, 11);
 
-/* ===== STATUS ===== */
-
 bool timeSynced = false;
 bool alarmSynced = false;
-
-/* ===== TIME ===== */
 
 String currentTime = "00:00:00";
 int currentDay = 0;
 
-/* ===== ALARM ===== */
 
 int alarmHour = 0;
 int alarmMinute = 0;
@@ -28,7 +23,7 @@ unsigned long ringStart = 0;
 bool alarmTriggeredThisMinute = false;
 unsigned long ringDurationMs = 10000;
 
-/* ===== SLACK ===== */
+/* slack*/
 
 bool slackNotify = false;
 unsigned long slackStart = 0;
@@ -36,12 +31,10 @@ unsigned long slackStart = 0;
 String slackUser = "";
 String slackMessage = "";
 
-/* ===== DISPLAY TRACKING ===== */
-
 String lastLine1 = "";
 String lastLine2 = "";
 
-/* ===== BLINK + SCROLL ===== */
+/* blick/scroll*/
 
 bool blinkState = false;
 unsigned long lastBlink = 0;
@@ -49,17 +42,17 @@ unsigned long lastBlink = 0;
 unsigned long lastScroll = 0;
 int scrollIndex = 0;
 
-/* ===== BUZZER ===== */
+/*buzzer*/
 
 bool beepState = false;
 unsigned long lastBeep = 0;
 
-/* ===== LOADING ANIMATION ===== */
+/*load animation*/
 
 unsigned long lastLoadUpdate = 0;
 int loadProgress = 0;
 
-/* ===== ANIMATION SYSTEM ===== */
+/* animation */
 
 bool animationMode = false;
 char animationType = 'C';
@@ -70,13 +63,13 @@ int animFrame = 0;
 int cactusX = 15;
 bool dinoFrame = false;
 
-/* ===== HARDWARE ===== */
+
 
 const int buzzerPin = 8;
 
 String days[7] = {"SU","MO","TU","WE","TH","FR","SA"};
 
-/* ===== CUSTOM CHARACTERS ===== */
+/* custom characters */
 
 byte bell[8] = {
 B00000,
@@ -146,14 +139,13 @@ B00000
 
 String serialBuffer = "";
 
-/* ================= LCD CACHE RESET ================= */
 
 void resetLCDCache(){
   lastLine1 = "";
   lastLine2 = "";
 }
 
-/* ================= SETUP ================= */
+
 
 void setup(){
 
@@ -173,7 +165,6 @@ void setup(){
   pinMode(buzzerPin, OUTPUT);
 }
 
-/* ================= LOOP ================= */
 
 void loop(){
 
@@ -190,7 +181,6 @@ void loop(){
     }
   }
 
-  /* ===== RUN ANIMATION ===== */
 
   if(animationMode){
 
@@ -200,7 +190,6 @@ void loop(){
     return;
   }
 
-  /* ===== CONNECTING SCREEN ===== */
 
   if(!(timeSynced && alarmSynced)){
 
@@ -233,7 +222,7 @@ void loop(){
     return;
   }
 
-  /* ===== SLACK DISPLAY ===== */
+  /* slack notify*/
 
   if(slackNotify){
 
@@ -289,7 +278,7 @@ void loop(){
   else if(hour24>12)
     displayHour-=12;
 
-  /* ===== RING MODE ===== */
+  /* ring mode*/
 
   if(ringing){
 
@@ -357,7 +346,7 @@ void loop(){
     return;
   }
 
-  /* ===== NORMAL CLOCK ===== */
+  /*normal mode clock*/
 
   char buffer[17];
 
@@ -427,7 +416,7 @@ void loop(){
   }
 }
 
-/* ================= LCD UPDATE ================= */
+
 
 void updateLCD(String l1,String l2){
 
@@ -451,7 +440,7 @@ void updateLCD(String l1,String l2){
   }
 }
 
-/* ================= WAVE ANIMATION ================= */
+/* wave animation */
 
 void waveAnimation(){
 
@@ -476,7 +465,7 @@ void waveAnimation(){
   animFrame++;
 }
 
-/* ================= DINO ANIMATION ================= */
+/* dino animation */
 
 void dinoAnimation(){
 
@@ -518,7 +507,7 @@ void dinoAnimation(){
   animFrame++;
 }
 
-/* ================= SERIAL COMMAND ================= */
+
 
 void processLine(String input){
 

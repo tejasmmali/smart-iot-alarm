@@ -3,21 +3,21 @@
 #include <ArduinoJson.h>
 #include "time.h"
 
-/* WIFI */
+
 
 const char* ssid = "BAPPA 3";
 const char* password = "tej@$m@li7122007@@$";
 
-/* FIREBASE */
+
 
 const char* firebaseURL =
-"https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/alarms.json";
+"https://YOUR_FIREBASE_PROJECT.firebaseio.com/alarms.json";
 
 const char* slackURL =
-"https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/slack_messages.json";
+"https://YOUR_FIREBASE_PROJECT.firebaseio.com/slack_messages.json";
 
 const char* animationURL =
-"https://smart-iot-alarm-2d459-default-rtdb.firebaseio.com/animation/mode.json";
+"https://YOUR_FIREBASE_PROJECT.firebaseio.com/animation/mode.json";
 
 /* BUTTONS */
 
@@ -48,7 +48,7 @@ const int daylightOffset_sec = 0;
 
 HardwareSerial mySerial(2);
 
-/* ================= SETUP ================= */
+
 
 void setup(){
 
@@ -73,7 +73,7 @@ Serial.println("\nWiFi Connected");
 configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
-/* ================= LOOP ================= */
+
 
 void loop(){
 
@@ -111,7 +111,7 @@ fetchAnimationState();
 
 }
 
-/* ================= BUTTON CONTROL ================= */
+/* btn control*/
 
 void handleButtons(){
 
@@ -120,7 +120,7 @@ bool stopState=digitalRead(stopButton);
 
 if(millis()-lastButtonTime>80){
 
-/* MODE BUTTON */
+/* mode btn*/
 
 if(modeState==LOW && lastModeState==HIGH){
 
@@ -149,7 +149,7 @@ updateFirebaseAnimation("wave");
 }
 }
 
-/* STOP BUTTON */
+/* sto btn */
 
 if(stopState==LOW && lastStopState==HIGH){
 
@@ -166,7 +166,6 @@ lastModeState=modeState;
 lastStopState=stopState;
 }
 
-/* ================= FIREBASE UPDATE ================= */
 
 void updateFirebaseAnimation(String mode){
 
@@ -184,7 +183,7 @@ http.end();
 
 }
 
-/* ================= SEND TIME ================= */
+
 
 void sendTimeToUNO(){
 
@@ -204,7 +203,6 @@ mySerial.print(",");
 mySerial.println(timeinfo.tm_wday);
 }
 
-/* ================= FETCH ANIMATION ================= */
 
 void fetchAnimationState(){
 
@@ -247,7 +245,7 @@ mySerial.println("C");
 http.end();
 }
 
-/* ================= FETCH ALARM ================= */
+
 
 void fetchAlarmFromFirebase(){
 
@@ -344,7 +342,7 @@ mySerial.println("ACLEAR");
 http.end();
 }
 
-/* ================= FETCH SLACK ================= */
+/* slack message*/
 
 void fetchSlackMessage(){
 
