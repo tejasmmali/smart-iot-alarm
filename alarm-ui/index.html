@@ -57,6 +57,20 @@
       width: 100%;
       padding: 10px 20px;
     }
+  /* hide scrollbar but keep scroll */
+
+.screen{
+  flex:1;
+  overflow-y:auto;
+  padding-bottom:120px;
+
+  -ms-overflow-style:none;   /* IE / Edge */
+  scrollbar-width:none;      /* Firefox */
+}
+
+.screen::-webkit-scrollbar{
+  display:none;              /* Chrome / Safari */
+}
   </style>
 </head>
 
