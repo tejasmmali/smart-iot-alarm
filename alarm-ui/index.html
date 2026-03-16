@@ -26,6 +26,26 @@
     transform:translateY(1px) scale(0.99);
     box-shadow:0 4px 18px rgba(0,0,0,0.8);
   }
+  .demo-btn{
+  background:#fdfdfd;
+  color:rgb(0, 0, 0);
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:13px;
+  text-decoration:none;
+  font-weight:600;
+  margin-right:10px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  border: #000000 dashed 3px;
+}
+
+.demo-btn:hover{
+ border: #000000 solid 3px;
+ 
+}
+
 </style>
 </head>
 <body>
@@ -39,10 +59,27 @@
   </div>
 
   <div class="screen screen-panel" id="screen-alarms">
-    <div class="screen-header">
-      <img src="https://raw.githubusercontent.com/tejasmmali/smart-iot-alarm/990b74538519c7ce605a7686ba212e3bbcbdc54c/images/flag-orpheus-left-bw.svg" alt="Logo" class="header-logo">
-      <div class="kebab">⋮</div>
-    </div>
+<div class="screen screen-panel" id="screen-alarms">
+  <div class="screen-header">
+
+    <img src="https://raw.githubusercontent.com/tejasmmali/smart-iot-alarm/990b74538519c7ce605a7686ba212e3bbcbdc54c/images/flag-orpheus-left-bw.svg" 
+    alt="Logo" class="header-logo">
+
+    <!-- Demo Video Button -->
+    <a href="https://youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank" class="demo-btn">
+
+      <!-- YouTube SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+        <path fill="#000000"
+          d="M23.498 6.186a2.996 2.996 0 0 0-2.108-2.12C19.433 3.5 12 3.5 12 3.5s-7.433 0-9.39.566A2.996 2.996 0 0 0 .502 6.186 31.07 31.07 0 0 0 0 12a31.07 31.07 0 0 0 .502 5.814 2.996 2.996 0 0 0 2.108 2.12C4.567 20.5 12 20.5 12 20.5s7.433 0 9.39-.566a2.996 2.996 0 0 0 2.108-2.12A31.07 31.07 0 0 0 24 12a31.07 31.07 0 0 0-.502-5.814zM9.75 15.568V8.432L15.818 12 9.75 15.568z"/>
+      </svg> Demo video 
+
+    </a>
+
+    <div class="kebab"></div>
+
+  </div>
+</div>
 
     <div class="lcd-label">SMART Alarm CLOCK</div>
     <div class="lcd-wrap">
